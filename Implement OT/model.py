@@ -3,7 +3,7 @@ from torch import nn
 from transformers import BertTokenizerFast, BertModel
 
 
-class word_and_label_representation(nn.Module):
+class EDmodel(nn.Module):
     def __init__(self, model_name="bert-base-uncase", labels=[], device="cuda"):
         super().__init__()
         self.model_name = model_name
