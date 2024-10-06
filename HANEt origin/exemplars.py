@@ -75,7 +75,11 @@ class Exemplars():
                     repeat_times = int(exemplar_num / reps.size(0)) + 1
                     reps = reps.repeat(repeat_times, 1)
                     data_ls = data_ls * repeat_times
-                data_ls = np.asarray(data_ls)
+                try: 
+                    data_ls = np.asarray(data_ls)
+                except Exception as e:
+                    print(f"An error occurred: {e}")
+                    print(f"size of data_ls is: {data_ls.size()}")
                 prototype_rep = reps.mean(0)
                 dist = torch.sqrt(torch.sum(torch.square(prototype_rep - reps), dim=1))
                 reps_num = exemplar_num
