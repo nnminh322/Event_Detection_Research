@@ -7,7 +7,7 @@ from torch.nn.utils.rnn import unpad_sequence
 from random import shuffle
 
 args = parse_arguments()
-device = torch.device(args.device if torch.cuda.is_available() and args.device != 'cpu' else "cpu")  # type: ignore
+device = torch.device(args.device if torch.cuda.is_available() and args.device != "cpu" else "cpu")  # type: ignore
 
 
 class BertED(nn.Module):
@@ -24,8 +24,8 @@ class BertED(nn.Module):
         self.input_dim = self.backbone.config.hidden_size
         self.fc = nn.Linear(self.input_dim, class_num)
         if self.is_input_mapping:
-            self.map_hidden_dim = 512 # 512 is implemented by the paper
-            self.map_input_dim =  self.input_dim * 2
+            self.map_hidden_dim = 512  # 512 is implemented by the paper
+            self.map_input_dim = self.input_dim * 2
             self.input_map = nn.Sequential(
                 nn.Linear(self.map_input_dim, self.map_hidden_dim),
                 nn.ReLU(),
@@ -38,27 +38,34 @@ class BertED(nn.Module):
     def forward(self, x, masks, span=None, aug=None):
         # x = self.backbone(x) #TODO: test use
         return_dict = {}
-        backbone_output = self.backbone(x, attention_mask = masks)
+        backbone_output = self.backbone(x, attention_mask=masks)
         x, pooled_feat = backbone_output[0], backbone_output[1]
         context_feature = x.view(-1, x.shape[-1])
-        return_dict['reps'] = x[:, 0, :].clone()
+        return_dict["reps"] = x[:, 0, :].clone()
         if span != None:
             outputs, trig_feature = [], []
             for i in range(len(span)):
                 if self.is_input_mapping:
-                    x_cdt = torch.stack([torch.index_select(x[i], 0, span[i][:, j]) for j in range(span[i].size(-1))])
+                    x_cdt = torch.stack(
+                        [
+                            torch.index_select(x[i], 0, span[i][:, j])
+                            for j in range(span[i].size(-1))
+                        ]
+                    )
                     x_cdt = x_cdt.permute(1, 0, 2)
                     x_cdt = x_cdt.contiguous().view(x_cdt.size(0), x_cdt.size(-1) * 2)
                     opt = self.input_map(x_cdt)
                 else:
-                    opt = torch.index_select(x[i], 0, span[i][:, 0]) + torch.index_select(x[i], 0, span[i][:, 1])
-                    # x = x_cdt.permute(1, 0, 2) 
+                    opt = torch.index_select(
+                        x[i], 0, span[i][:, 0]
+                    ) + torch.index_select(x[i], 0, span[i][:, 1])
+                    # x = x_cdt.permute(1, 0, 2)
                 trig_feature.append(opt)
             trig_feature = torch.cat(trig_feature)
         outputs = self.fc(trig_feature)
-        return_dict['outputs'] = outputs
-        return_dict['context_feat'] = context_feature
-        return_dict['trig_feat'] = trig_feature
+        return_dict["outputs"] = outputs
+        return_dict["context_feat"] = context_feature
+        return_dict["trig_feat"] = trig_feature
         # if args.single_label:
         #     return_outputs = self.fc(enc_out_feature).view(-1, args.class_num + 1)
         # else:
@@ -66,12 +73,12 @@ class BertED(nn.Module):
         if aug is not None:
             feature_aug = trig_feature + torch.randn_like(trig_feature) * aug
             outputs_aug = self.fc(feature_aug)
-            return_dict['feature_aug'] = feature_aug
-            return_dict['outputs_aug'] = outputs_aug
+            return_dict["feature_aug"] = feature_aug
+            return_dict["outputs_aug"] = outputs_aug
         return return_dict
 
     def forward_backbone(self, x, masks):
-        x = self.backbone(x, attention_mask = masks)
+        x = self.backbone(x, attention_mask=masks)
         x = x.last_hidden_state
         return x
 
@@ -81,7 +88,7 @@ class BertED(nn.Module):
     # def forward_cl(self, x, masks, span, span_len):
     #     tk_len = torch.count_nonzero(masks, dim=-1) - 2
     #     perm = [torch.randperm(item).to(device) + 1 for item in tk_len]
-    #     span = unpad_sequence(span, span_len, batch_first=True)            
+    #     span = unpad_sequence(span, span_len, batch_first=True)
     #     if args.scl == "shuffle":
     #         for i in range(len(tk_len)):
     #             span[i] = torch.where(span[i].unsqueeze(2) == perm[i].unsqueeze(0).unsqueeze(0))[2].view(-1, 2) + 1
@@ -125,7 +132,7 @@ class BertED(nn.Module):
     #             opt = self.input_map(x_cdt)
     #         else:
     #             opt = torch.index_select(x[i], 0, span[i][:, 0]) + torch.index_select(x[i], 0, span[i][:, 1])
-    #             # x = x_cdt.permute(1, 0, 2) 
+    #             # x = x_cdt.permute(1, 0, 2)
     #         feature.append(opt)
     #     feature = torch.cat(feature)
     #     outputs = self.fc(feature)
