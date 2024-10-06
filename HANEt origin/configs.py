@@ -3,6 +3,8 @@ import argparse
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--my_test', default=True)
+
     parser.add_argument('--seed', default=42, type=int)
     parser.add_argument('--skip-first', action='store_true')
     parser.add_argument('--log-dir', default='./outputs/log_terminal/02-10-nomap-clreps')
