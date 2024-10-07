@@ -11,7 +11,7 @@ device = torch.device(
 def compute_CLLoss(Adj_mask, reprs, mat_size):
     logits_cl = torch.div(torch.mul(reprs, reprs.T), args.cl_temp)
     if args.sub_max:
-        logits_max_cl = torch.max(logits_cl, dim=-1, keepdim=True)
+        logits_max_cl, _ = torch.max(logits_cl, dim=-1, keepdim=True)
         logits_cl = logits_cl - logits_max_cl
     # more stable when compute softmax, ex: instead softmax([10,15,20]) -> softmax([-10,-5,0])
     exp_logits_cl = torch.exp(logits_cl)
