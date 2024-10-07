@@ -28,7 +28,7 @@ class Exemplars():
         return (x, mask, y, span ,self.radius)
 
     def rm_exemplars(self, exemplar_num):
-        if self.exemplars_x != [] and exemplar_num < len(self.exemplars_x[0]):
+        if self.exemplars_x != [] and exemplar_num > len(self.exemplars_x[0]):
             self.exemplars_x = [i[:exemplar_num] for i in self.exemplars_x]
             self.exemplars_mask = [i[:exemplar_num] for i in self.exemplars_mask]
             self.exemplars_y = [i[:exemplar_num] for i in self.exemplars_y]
