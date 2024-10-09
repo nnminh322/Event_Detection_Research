@@ -31,5 +31,17 @@ class MAVEN_Dataset(Dataset):
         self.labels.extend(labels)
         self.masks.extend(masks)
         self.spans.extend(spans)
-    
-    
+
+
+def collect_dataset(dataset_name, root, split, label2idx, stage_id, labels):
+    if split == "train":
+        data = [
+            instance
+            for t in collect_from_json(
+                dataset_name=dataset_name, root=root, split=split
+            )[stage_id]
+            for instance in t
+        ]
+    else:
+        data = collect_from_json(root=root, dataset_name=dataset_name, split=split)
+    data_tokens, data_labels, data_masks, data_spans = [], [], [], []
