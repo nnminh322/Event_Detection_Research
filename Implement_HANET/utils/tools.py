@@ -22,33 +22,26 @@ def compute_CLLoss(Adj_mask, reprs, mat_size):
     # just a little mathematical transform of the log of the 2 CL loss :))) put pen to paper
 
 
-def collect_from_json(dataset, root, split):
-    default = ["train", "dev", "test"]
-    if split == "train":
-        pth = os.path.join(
-            root,
-            dataset,
-            "perm" + str(args.perm_id),
-            f"{dataset}_{args.task_num}task_{args.class_num // args.task_num}way_{args.shot_num}shot.{split}.jsonl",
-        )
-    elif split in ["dev", "test"]:
-        pth = os.path.join(root, dataset, f"{dataset}.{split}.jsonl")
-    elif split == "stream":
-        pth = os.path.join(
-            root,
-            dataset,
-            f"stream_label_{args.task_num}task_{args.class_num // args.task_num}way.json",
-        )
+def collect_from_json(dataset_name, root, split):
+    default = ['train', 'dev', 'test'] 
+    if split == 'train':
+        pth = os.path.join(root,dataset_name,'perm'+str(args.perm_id),f"{dataset_name}_{args.task_num}task_{args.class_num // args.task_num}way_{args.shot_num}shot.{split}.jsonl")
+    elif split in ['dev', 'test']:
+        pth = os.path.join(root,dataset_name,f"{dataset_name}.{split}.jsonl")
+    elif split == 'stream':
+        pth = os.path.join(root,dataset_name,f'stream_label_{args.task_num}_{args.class_num//args.task_num}way.json')
     else:
-        raise ValueError(f'Split "{split}" value wrong!')
+        raise ValueError(f"Split \"{split}\" value wrong!")
+    
     if not os.path.exists(pth):
         raise FileNotFoundError(f"Path {pth} do not exist!")
     else:
         with open(pth) as f:
-            if pth.endswith(".jsonl"):
-                data = [json.loads(line) for line in f]
-                if split == "train":
-                    data = [list(i.values()) for i in data]
+            if pth.endswith('.jsonl'):
+                data = [json.load(line) for line in f]
+                if split == 'train':
+                    data = [i.value() for i in data]
             else:
                 data = json.load(f)
     return data
+
