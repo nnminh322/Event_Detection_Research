@@ -34,4 +34,6 @@ def collect_from_json(dataset, root, split):
                     data = [list(i.values()) for i in data]
             else:
                 data = json.load(f)
+    data = data[0][0][0]
+    
     return data
