@@ -54,6 +54,8 @@ def collect_dataset(dataset, root, split, label2idx, stage_id, labels):
         add_label = []
         add_span = []
         new_t = {}
+        #test
+        data = data[0][0][0]
         for i in range(len(dt['label'])):
             if dt['label'][i] in labels or dt['label'][i] == 0: # if the label of instance is in the query
                 add_label.append(dt['label'][i]) # append the instance and the label
@@ -91,10 +93,10 @@ def collect_dataset(dataset, root, split, label2idx, stage_id, labels):
         data_masks.append(token_mask)
         data_spans.append(valid_span)
             # data_spans.append(valid_span)
-    # if args.my_test:
+    if args.my_test:
         return MAVEN_Dataset(data_tokens[:100], data_labels[:100], data_masks[:100], data_spans[:100]) # TODO: deprecated, used for debugging, not for test!
-    # else:
-        # return MAVEN_Dataset(data_tokens, data_labels, data_masks, data_spans)
+    else:
+        return MAVEN_Dataset(data_tokens, data_labels, data_masks, data_spans)
 
 
 def collect_exemplar_dataset(dataset, root, split, label2idx, stage_id, labels):

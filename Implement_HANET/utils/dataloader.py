@@ -45,4 +45,9 @@ def collect_dataset(dataset_name, root, split, label2idx, stage_id, labels):
     else:
         data = collect_from_json(root=root, dataset_name=dataset_name, split=split)
     data_tokens, data_labels, data_masks, data_spans = [], [], [], []
-    
+    for dt in tqdm(data):
+        if "mention_id" in dt.keys():
+            dt.pop("mention_id")
+        if "sentence_id" in dt.keys():
+            dt.pop("sentence_id")
+        add_label, add_span, new_t = [], [], {}
