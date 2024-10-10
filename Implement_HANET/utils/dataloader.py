@@ -45,3 +45,4 @@ def collect_dataset(dataset_name, root, split, label2idx, stage_id, labels):
     else:
         data = collect_from_json(root=root, dataset_name=dataset_name, split=split)
     data_tokens, data_labels, data_masks, data_spans = [], [], [], []
+    
