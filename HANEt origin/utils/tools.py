@@ -1,6 +1,7 @@
 import json, os
 import torch
 from configs import parse_arguments
+import itertools
 args = parse_arguments()
 device = torch.device(args.device if torch.cuda.is_available() and args.device != 'cpu' else "cpu")  # type: ignore
 
@@ -13,6 +14,14 @@ def compute_CLLoss(Adj_mask, reprs, matsize): # compute InfoNCELoss
     denom_cl = torch.sum(exp_logits_cl * (1 - torch.eye(matsize).to(device)), dim = -1) 
     log_prob_cl = -torch.mean((logits_cl - torch.log(denom_cl)) * Adj_mask, dim=-1)
     return torch.mean(log_prob_cl[log_prob_cl > 0])
+
+def extract_single_dict(lst):
+    for item in lst:
+        if isinstance(item, list):
+            return extract_single_dict(item)  # Gọi đệ quy cho các danh sách con
+        elif isinstance(item, dict):
+            return item  # Trả về từ điển đầu tiên tìm thấy
+
 
 def collect_from_json(dataset, root, split):
     default = ['train', 'dev', 'test']
@@ -34,6 +43,6 @@ def collect_from_json(dataset, root, split):
                     data = [list(i.values()) for i in data]
             else:
                 data = json.load(f)
-    data = data[0][0][0]
+    data = extract_single_dict(data)
     
     return data

@@ -33,6 +33,7 @@ class MAVEN_Dataset(Dataset):
         self.spans.extend(spans)
 
 
+
 def collect_dataset(dataset_name, root, split, label2idx, stage_id, labels):
     if split == "train":
         data = [
@@ -51,3 +52,5 @@ def collect_dataset(dataset_name, root, split, label2idx, stage_id, labels):
         if "sentence_id" in dt.keys():
             dt.pop("sentence_id")
         add_label, add_span, new_t = [], [], {}
+
+
