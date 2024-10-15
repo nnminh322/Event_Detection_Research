@@ -76,18 +76,11 @@ class Exemplars():
                     reps = reps.repeat(repeat_times, 1)
                     data_ls = data_ls * repeat_times
                 import traceback
+# Lọc các phần tử không đồng nhất
+                data_ls = [item for item in data_ls if len(item) == expected_length]
 
-                try: 
-                    data_ls = np.asarray(data_ls)
-                except Exception as e:
-                    print(f"An error occurred: {e}")
-                    print(f"Length of data_ls: {len(data_ls)}")
-                    for idx, item in enumerate(data_ls):
-                        try:
-                            print(f"Item {idx}: type={type(item)}, length={len(item)}")
-                        except Exception as inner_e:
-                            print(f"Item {idx}: type={type(item)}, unable to get length: {inner_e}")
-                    traceback.print_exc()
+                # data_ls = np.asarray(data_ls)
+
 
                 prototype_rep = reps.mean(0)
                 dist = torch.sqrt(torch.sum(torch.square(prototype_rep - reps), dim=1))
