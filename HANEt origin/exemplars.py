@@ -97,6 +97,7 @@ class Exemplars():
                 # data_topk = dt[topk_dist_idx]
                 # label_topk = lb[topk_dist_idx]
                 # span_topk = sp[topk_dist_idx]
+                print(len(data_ls))
                 data_topk = data_ls[list(topk_dist_idx)]
                 # self.radius.append(np.trace(cov))
                 self.exemplars_x.append(list(data_topk[:, 0]))
