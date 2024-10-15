@@ -10,6 +10,7 @@ do
                 do
                     for n in ACE MAVEN
                     do
+                        echo $n $m $l $k $j $i
                         python train.py \
                             --data-root ./data_incremental \
                             --dataset $n \

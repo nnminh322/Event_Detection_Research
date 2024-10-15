@@ -53,4 +53,10 @@ def collect_dataset(dataset_name, root, split, label2idx, stage_id, labels):
             dt.pop("sentence_id")
         add_label, add_span, new_t = [], [], {}
 
+        for i in range(len(dt['label'])):
+            if dt['label'][i] in labels or dt['label'][i] == 0:
+                add_label.append(dt['label'][i])
+                add_span.append(dt['span'][i])
+
+
 
