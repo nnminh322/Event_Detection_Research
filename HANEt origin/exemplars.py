@@ -77,21 +77,18 @@ class Exemplars():
                     data_ls = data_ls * repeat_times
                 import traceback
 # Lọc các phần tử không đồng nhất
-                data_ls = [item for item in data_ls if len(item) == expected_length]
+                # data_ls = [item for item in data_ls if len(item) == expected_length]
 
-                # data_ls = np.asarray(data_ls)
+                data_ls = np.asarray(data_ls)
 
+
+                data_ls = np.array(data_ls, dtype=object)
 
                 prototype_rep = reps.mean(0)
                 dist = torch.sqrt(torch.sum(torch.square(prototype_rep - reps), dim=1))
-                reps_num = exemplar_num
-                topk_dist_idx = torch.topk(dist, reps_num, largest=False).indices.to('cpu')
-                # self.exemplars[label] = torch.cat([self.exemplars[label], reps[topk_dist_idx, :]], 0)
-                # data_topk = dt[topk_dist_idx]
-                # label_topk = lb[topk_dist_idx]
-                # span_topk = sp[topk_dist_idx]
-                print(len(topk_dist_idx))
-                data_topk = data_ls[list(topk_dist_idx)]
+                topk_dist_idx = torch.topk(dist, exemplar_num, largest=False).indices.to('cpu').tolist()
+                
+                data_topk = [data_ls[idx] for idx in topk_dist_idx]
                 # self.radius.append(np.trace(cov))
                 self.exemplars_x.append(list(data_topk[:, 0]))
                 self.exemplars_y.append(list(data_topk[:, 1]))
