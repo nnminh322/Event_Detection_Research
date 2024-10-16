@@ -79,7 +79,7 @@ class Exemplars():
 # Lọc các phần tử không đồng nhất
                 # data_ls = [item for item in data_ls if len(item) == expected_length]
 
-                data_ls = np.asarray(data_ls)
+                # data_ls = np.asarray(data_ls)
 
 
                 data_ls = np.array(data_ls, dtype=object)
