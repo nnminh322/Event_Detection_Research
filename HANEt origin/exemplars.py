@@ -89,6 +89,7 @@ class Exemplars():
                 topk_dist_idx = torch.topk(dist, exemplar_num, largest=False).indices.to('cpu').tolist()
                 
                 data_topk = [data_ls[idx] for idx in topk_dist_idx]
+                data_topk = np.asarray(data_topk)  # Chuyển thành mảng NumPy
                 # self.radius.append(np.trace(cov))
                 self.exemplars_x.append(list(data_topk[:, 0]))
                 self.exemplars_y.append(list(data_topk[:, 1]))
