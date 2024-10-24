@@ -1,4 +1,4 @@
-source activate zhangchenlong
+# source activate zhangchenlong
 for i in 1 2 5 10
 do
     for j in 5 10
@@ -20,7 +20,7 @@ do
                             --no-freeze-bert \
                             --shot-num $j \
                             --batch-size 4 \
-                            --device cuda:1 \
+                            --device cuda: 0,1 \
                             --log \
                             --log-dir ./outputs/log_incremental/temp7_submax/first_wo_UCL+TCL/ \
                             --log-name a${k}_l${l}_r${i} \
