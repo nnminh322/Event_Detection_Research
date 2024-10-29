@@ -44,7 +44,7 @@ class Event_Detection_Dataset(Dataset):
         return {
             "input_ids": encoding["input_ids"].squeeze(),
             "attention_mask": encoding["attention_mask"].squeeze(),
-            "type_token_ids": encoding["token_type_ids"].squeeze(),
+            "token_type_ids": encoding["token_type_ids"].squeeze(),
             "label_ids": label_ids,
             "type_label_ids": type_label_ids,
         }
