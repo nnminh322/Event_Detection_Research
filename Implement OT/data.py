@@ -14,7 +14,7 @@ class Event_Detection_Dataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, index):
-        sample = self.data(index)
+        sample = self.data[index]
         words = sample["words"]
         labels = sample["labels"]
         types = sample["types"]
