@@ -1,4 +1,3 @@
-# source activate zhangchenlong
 for i in 1 2 5 10
 do
     for j in 5 10
@@ -11,6 +10,7 @@ do
                 do
                     for n in ACE MAVEN
                     do
+                        echo $n $m $l $k $j $i
                         python train.py \
                             --data-root ./data_incremental \
                             --dataset $n \
