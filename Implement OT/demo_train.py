@@ -3,8 +3,8 @@
 import torch
 from torch.utils.data import DataLoader
 from transformers import BertTokenizerFast
-from data import EventDetectionDataset
-from model import EDModel
+from data import Event_Detection_Dataset
+from model import EDmodel
 from ot_utils import compute_optimal_transport
 import torch.nn.functional as F
 import torch.optim as optim
@@ -41,11 +41,11 @@ def main():
     ]
     
     # Tạo dataset và dataloader
-    dataset = EventDetectionDataset(data, tokenizer)
+    dataset = Event_Detection_Dataset(data, tokenizer)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     
     # Khởi tạo mô hình
-    model = EDModel(bert_model_name=bert_model_name, labels=labels, device=device)
+    model = EDmodel(bert_model_name=bert_model_name, labels=labels, device=device)
     model.train()  # Đặt mô hình ở chế độ huấn luyện
     
     # Định nghĩa optimizer (chỉ cập nhật embedding của nhãn và các head)
