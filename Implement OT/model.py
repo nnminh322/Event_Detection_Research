@@ -45,7 +45,7 @@ class EDmodel(nn.Module):
         # attention_mask = encoding["attention_mask"].to(self.device)
         # token_type_ids = encoding["token_type_tds"].to(self.device)
 
-        with torch.no_grad:
+        with torch.no_grad():
             outputs = self.bert(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
@@ -61,7 +61,7 @@ class EDmodel(nn.Module):
         # Type Prediction
 
         label_embeddings = self.label_embeddings.weight  # [Num_label, hidden_size]
-        label_embeddings = label_embeddings.unsqueeze(0).repeat(input_ids.size[0], 1, 1)  # [Num_label, hidden_size] -> [Batch_size, Num_label, Hidden_size]
+        label_embeddings = label_embeddings.unsqueeze(0).repeat(input_ids.size(0), 1, 1)  # [Num_label, hidden_size] -> [Batch_size, Num_label, Hidden_size]
         e_cls = e_cls.unsqueeze(1).repeat(1, self.num_labels, 1) # [Batch_size, hidden_size] -> [Batch_size, Num_label, hidden_size]
         concat = torch.cat([label_embeddings, e_cls], dim=-1) # Concat in last size dimention
 

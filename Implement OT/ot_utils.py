@@ -8,9 +8,10 @@ def compute_optimal_transport(p, q, C, epsilon=0.1):
     pi_star = []
 
     for i in range(batch_size):
-        p_i = p[i].cpu().numpy()
-        q_i = q[i].cpu().numpy()
-        C_i = C[i].cpu().numpy()
+        p_i = p[i].detach().cpu().numpy()
+        q_i = q[i].detach().cpu().numpy()
+        C_i = C[i].detach().cpu().numpy()
+
 
         pi_i = ot.sinkhorn(p_i, q_i, C_i, reg=epsilon)
         pi_star.append(pi_i)
