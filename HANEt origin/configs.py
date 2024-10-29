@@ -12,6 +12,7 @@ def parse_arguments():
     parser.add_argument('--tb-dir', default='./outputs/log_tensorboard/02-10-nomap-clreps')
     parser.add_argument('--save-dir', default='')
     parser.add_argument('--resume', default='')
+    # parser.add_argument('--parallel', default='single', choices=['single', 'DP', 'DDP'])
     parser.add_argument('--parallel', default='single', choices=['single', 'DP', 'DDP'])
     parser.add_argument('--device_ids', default='0,1')
     parser.add_argument("--local_rank", type=int, default=0)
