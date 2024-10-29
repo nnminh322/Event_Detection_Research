@@ -27,7 +27,7 @@ class Event_Detection_Dataset(Dataset):
             return_token_type_ids=True,
             padding="max_length",
             max_length=self.max_length,
-            Truncation=True,
+            # Truncation=True,
         )
 
         word_ids = encoding.word_ids(batch_index=0)
