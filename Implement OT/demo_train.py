@@ -63,7 +63,7 @@ def main():
             attention_mask = batch['attention_mask'].to(device)
             token_type_ids = batch['token_type_ids'].to(device)
             label_ids = batch['label_ids'].to(device)          # [batch_size, seq_len]
-            type_labels = batch['type_labels'].to(device)      # [batch_size, num_labels]
+            type_label_ids = batch['type_label_ids'].to(device)      # [batch_size, num_labels]
             
             optimizer.zero_grad()
             
@@ -124,7 +124,7 @@ def main():
             
             # Tính LT_P: Type Prediction Loss
             # L2.2: Binary Cross Entropy giữa p_tj và type_labels
-            LT_P = F.binary_cross_entropy(p_tj, type_labels, reduction='mean')
+            LT_P = F.binary_cross_entropy(p_tj, type_label_ids, reduction='mean')
             
             # Tính tổng hàm mất mát
             alpha_task = 1.0
