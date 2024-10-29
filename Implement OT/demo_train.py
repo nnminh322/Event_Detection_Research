@@ -15,8 +15,8 @@ def main():
     labels = ["Purchase", "Employment", "Other"]
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     batch_size = 8
-    num_epochs = 30
-    learning_rate = 3e-5
+    num_epochs = 150
+    learning_rate = 3e-6
     epsilon = 1e-8  # Tham số regularization cho Sinkhorn
     
     # Khởi tạo tokenizer
