@@ -45,7 +45,7 @@ def main():
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     
     # Khởi tạo mô hình
-    model = EDmodel(bert_model_name=bert_model_name, labels=labels, device=device)
+    model = EDmodel(model_name=bert_model_name, labels=labels, device=device)
     model.train()  # Đặt mô hình ở chế độ huấn luyện
     
     # Định nghĩa optimizer (chỉ cập nhật embedding của nhãn và các head)
