@@ -14,10 +14,10 @@ def main():
     bert_model_name = 'bert-base-uncased'
     labels = ["Purchase", "Employment", "Other"]
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    batch_size = 16
-    num_epochs = 10
-    learning_rate = 1e-3
-    epsilon = 0.01  # Tham số regularization cho Sinkhorn
+    batch_size = 8
+    num_epochs = 30
+    learning_rate = 3e-5
+    epsilon = 1e-8  # Tham số regularization cho Sinkhorn
     
     # Khởi tạo tokenizer
     tokenizer = BertTokenizerFast.from_pretrained(bert_model_name)
@@ -34,8 +34,58 @@ def main():
             'labels': [0, 1, -1, -1, 0, -1, -1],
             'types': [0, 1, 0]
         },
-        # Thêm nhiều mẫu khác
+        {
+            'words': ["The", "company", "announced", "a", "new", "product", "launch", "next", "week", "."],
+            'labels': [0, 0, 1, -1, -1, 0, -1, -1, -1, -1],
+            'types': [1, 0, 1]
+        },
+        {
+            'words': ["He", "completed", "the", "marathon", "in", "record", "time", "."],
+            'labels': [0, 1, -1, 0, -1, 0, 0, -1],
+            'types': [0, 1, 1]
+        },
+        {
+            'words': ["Susan", "won", "the", "first", "prize", "in", "the", "competition", "."],
+            'labels': [0, 1, -1, 0, 0, -1, -1, 0, -1],
+            'types': [1, 0, 1]
+        },
+        {
+            'words': ["The", "weather", "forecast", "predicted", "rain", "for", "the", "weekend", "."],
+            'labels': [0, 0, 0, 1, 0, -1, -1, 0, -1],
+            'types': [0, 1, 0]
+        },
+        {
+            'words': ["New", "technology", "has", "changed", "the", "way", "we", "live", "and", "work", "."],
+            'labels': [-1, 0, 1, 1, -1, -1, -1, 0, -1, 0, -1],
+            'types': [1, 0, 1]
+        },
+        {
+            'words': ["The", "team", "celebrated", "their", "victory", "last", "night", "."],
+            'labels': [0, 0, 1, 0, 0, -1, -1, -1],
+            'types': [1, 1, 0]
+        },
+        {
+            'words': ["Alice", "is", "preparing", "for", "her", "exams", "next", "month", "."],
+            'labels': [0, 1, 1, -1, -1, 0, -1, -1, -1],
+            'types': [0, 1, 0]
+        },
+        {
+            'words': ["They", "built", "a", "new", "library", "in", "the", "city", "center", "."],
+            'labels': [0, 1, -1, -1, 0, -1, -1, 0, 0, -1],
+            'types': [1, 0, 1]
+        },
+        {
+            'words': ["The", "festival", "will", "take", "place", "in", "October", "."],
+            'labels': [0, 0, 1, 1, -1, -1, -1, -1],
+            'types': [1, 1, 0]
+        },
+        {
+            'words': ["Climate", "change", "is", "affecting", "wildlife", "around", "the", "world", "."],
+            'labels': [0, 1, 1, 1, 0, -1, -1, 0, -1],
+            'types': [0, 1, 1]
+        }
     ]
+
     
     # Tạo dataset và dataloader
     dataset = Event_Detection_Dataset(data, tokenizer)
