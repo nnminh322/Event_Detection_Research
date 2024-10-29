@@ -374,8 +374,8 @@ def train(local_rank, args):
 if __name__ == "__main__":
     args = parse_arguments()
     if args.parallel == 'DDP':
-        # os.environ["MASTER_ADDR"] = "localhost"
-        # os.environ["MASTER_PORT"] = "29500"
+        os.environ["MASTER_ADDR"] = "localhost"
+        os.environ["MASTER_PORT"] = "29500"
         mp.spawn(train,
             args=(args, ),
             nprocs=args.world_size,
