@@ -22,7 +22,7 @@ def main():
         {
             "words": ["John", "buy", "a", "new", "car", "."],
             "labels": [0, 0, -1, -1, 0, -1],
-            "type": [1, 0, 0],
+            "types": [1, 0, 0],
         },
         {
             "words": ["Mary", "started", "a", "new", "job", "today", "."],
@@ -189,7 +189,7 @@ def main():
         lr=learning_rate,
     )
 
-    for epoch in num_epochs:
+    for epoch in range(num_epochs):
         total_loss = 0.0
         for batch in dataloader:
             input_ids = batch["input_ids"].to(device)
