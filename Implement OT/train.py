@@ -180,7 +180,7 @@ def main():
     model.train()
     model.to(device)
 
-    optimzer = optim(
+    optimzer = optim.Adam(
         [
             {"params": model.label_embeddings.parameters()},
             {"params": model.trigger_ffn.parameters()},
@@ -196,8 +196,63 @@ def main():
             attention_mask = batch["attention_mask"].to(device)
             token_type_ids = batch["token_type_ids"].to(device)
             label_ids = batch["label_ids"].to(device)
-            
+            type_label_ids = batch["type_label_ids"].to(device)
+
             other_label = model.num_labels - 1
+
+            y_l = torch.where(
+                label_ids < 0, torch.tensor(other_label, device=device), label_ids
+            )
+
+            optimzer.zero_grad()
+            p_wi, p_tj, last_hidden_state, e_cls = model(
+                input_ids, attention_mask, token_type_ids
+            )
+
+            E = last_hidden_state
+            T = model.get_label_embedding()
+            E_exp = E.unsqueeze(2)
+            T_exp = T.unsqueeze(0).unsqueeze(0)
+            C = torch.norm(E_exp - T_exp, p=2, dim=-1)
+            D_W_P = F.softmax(p_wi, dim=1)
+            D_W_T = F.softmax(p_tj, dim=1)
+
+            pi_star = compute_optimal_transport(D_W_P, D_W_T, C=C, epsilon=epsilon)
+
+            pi_start_golder = pi_star.gather(2, y_l.unsqueeze(2)).squeeze(2)
+
+            L_task = F.binary_cross_entropy(
+                pi_start_golder, (label_ids >= 0).float(), reduction="mean"
+            )
+
+            pi_g = F.one_hot(y_l, num_classes=model.num_labels).float()
+            Dist_pi_star = (pi_star * C).sum(dim=[1, 2])
+            Dist_pi_g = (pi_g * C).sum(dim=[1, 2])
+
+            L_OT = torch.abs(Dist_pi_star - Dist_pi_g).mean()
+            LT_I = F.binary_cross_entropy(
+                p_wi, (label_ids >= 0).float(), reduction="mean"
+            )
+
+            LT_P = F.binary_cross_entropy(p_tj, type_label_ids, reduction="mean")
+
+            alpha_task = 1.0
+            alpha_OT = 0.01
+            alpha_TI = 0.05
+            alpha_TP = 0.01
+            L = (
+                alpha_task * L_task
+                + alpha_OT * L_OT
+                + alpha_TI * LT_I
+                + alpha_TP * LT_P
+            )
+
+            L.backward()
+            optimzer.step()
+
+            total_loss += L.item()
+        avg_loss = total_loss / len(dataloader)
+        print(f"Epoch {epoch+1}/{num_epochs}, Loss: {avg_loss:.4f}")
 
 
 if __name__ == "__main__":
