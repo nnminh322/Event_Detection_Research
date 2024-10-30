@@ -14,7 +14,7 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     batch_size = 8
     learning_rate = 3e-8
-    num_epoch = 50
+    num_epochs = 50
     epsilon = 1e-8
     tokenizer = BertTokenizerFast.from_pretrained(bert_model_name)
 
