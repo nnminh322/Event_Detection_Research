@@ -189,7 +189,7 @@ def main():
         lr=learning_rate,
     )
 
-    for epoch in num_epoch:
+    for epoch in num_epochs:
         total_loss = 0.0
         for batch in dataloader:
             input_ids = batch["input_ids"].to(device)
