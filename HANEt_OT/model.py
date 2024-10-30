@@ -11,7 +11,7 @@ device = torch.device(args.device if torch.cuda.is_available() and args.device !
 
 
 class BertED(nn.Module):
-    def __init__(self, class_num=args.class_num + 1, input_map=False):
+    def __init__(self, class_num=args.class_num + 1, input_map=False, labels=[]):
         super().__init__()
         self.backbone = BertModel.from_pretrained(args.backbone)
         if not args.no_freeze_bert:
@@ -22,6 +22,7 @@ class BertED(nn.Module):
             print("Update bert parameters")
         self.is_input_mapping = input_map
         self.input_dim = self.backbone.config.hidden_size
+        self.labels = labels
         self.fc = nn.Linear(self.input_dim, class_num)
         if self.is_input_mapping:
             self.map_hidden_dim = 512  # 512 is implemented by the paper
@@ -34,6 +35,14 @@ class BertED(nn.Module):
                 nn.ReLU(),
             )
             self.fc = nn.Linear(self.map_hidden_dim, class_num)
+
+        self.label_embeddings = nn.Linear(class_num, self.map_hidden_dim)
+        nn.init.xavier_normal_(self.label_embeddings.weight)
+
+        self.trigger_ffn = nn.Linear(self.hidden_size, 1)
+        self.type_ffn = nn.Linear(
+            self.hidden_size + self.hidden_size, 1
+        )  # 2 * Hidden_size -> 1
 
     def forward(self, x, masks, span=None, aug=None):
         # x = self.backbone(x) #TODO: test use
@@ -75,6 +84,27 @@ class BertED(nn.Module):
             outputs_aug = self.fc(feature_aug)
             return_dict["feature_aug"] = feature_aug
             return_dict["outputs_aug"] = outputs_aug
+
+        # Trigger Identification
+        last_hidden_state = backbone_output.last_hidden_state
+        p_wi = torch.sigmoid(self.trigger_ffn(last_hidden_state)).squeeze(-1)
+
+        label_embeddings = self.label_embeddings.weight  # [Num_label, hidden_size]
+        label_embeddings = label_embeddings.unsqueeze(0).repeat(
+            x.size(0), 1, 1
+        )  # [Num_label, hidden_size] -> [Batch_size, Num_label, Hidden_size]
+        e_cls = e_cls.unsqueeze(1).repeat(
+            1, self.num_labels, 1
+        )  # [Batch_size, hidden_size] -> [Batch_size, Num_label, hidden_size]
+        concat = torch.cat(
+            [label_embeddings, e_cls], dim=-1
+        )  # Concat in last size dimention
+
+        p_tj = torch.sigmoid(self.type_ffn(concat)).squeeze(-1)
+
+        return_dict["p_wi"] = p_wi
+        return_dict["p_tj"] = p_tj
+
         return return_dict
 
     def forward_backbone(self, x, masks):
