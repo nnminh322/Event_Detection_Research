@@ -104,6 +104,7 @@ class BertED(nn.Module):
 
         return_dict["p_wi"] = p_wi
         return_dict["p_tj"] = p_tj
+        return_dict["e_cls"] = e_cls
 
         return return_dict
 
