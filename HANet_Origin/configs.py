@@ -12,7 +12,7 @@ def parse_arguments():
     parser.add_argument('--parallel', default='single', choices=['single', 'DP', 'DDP'])
     parser.add_argument('--device_ids', default='0,1')
     parser.add_argument("--local_rank", type=int, default=0)
-    parser.add_argument("--world-size", type=int, default=4)
+    parser.add_argument("--world-size", type=int, default=2)
     parser.add_argument("--amp", action='store_true') 
     parser.add_argument('--perm-id', default=0, type=str, choices=[str(i) for i in range(5)])
     parser.add_argument('--dataset', default='MAVEN', choices=['MAVEN', 'ACE'])
