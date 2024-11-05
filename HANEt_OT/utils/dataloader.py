@@ -4,6 +4,7 @@ from torch.utils.data import Dataset
 from configs import parse_arguments
 from utils.tools import collect_from_json
 
+
 import numpy as np
 args = parse_arguments()
 
@@ -16,6 +17,8 @@ class MAVEN_Dataset(Dataset):
         self.masks = masks
         self.labels = labels
         self.spans = spans
+        self.true_one_hot_trigger_vector = []
+        self.true_one_hot_label_vector = []
         # self.requires_cl = [0 for _ in range(len(spans))]
         # self.labels = []
         # for stream in streams:
@@ -25,7 +28,7 @@ class MAVEN_Dataset(Dataset):
         # for label_ls in labels:
         #     self.labels.append([self.label2idx[label]  for label in label_ls])
     def __getitem__(self, index):
-        return [self.tokens[index], self.labels[index], self.masks[index], self.spans[index]]
+        return [self.tokens[index], self.labels[index], self.masks[index], self.spans[index],self.true_one_hot_trigger_vector[index],self.true_one_hot_label_vector[index]]
     def __len__(self):
         return len(self.labels)
     def extend(self, tokens, labels, masks, spans):
@@ -33,10 +36,62 @@ class MAVEN_Dataset(Dataset):
         self.labels.extend(labels)
         self.masks.extend(masks)
         self.spans.extend(spans)
+    
+    def get_one_hot_true_label_and_true_trigger(self, num_label):
+        for index_of_data_instance in range(self.__len__()):
+            true_label = []
+            trigger_word = []
+            seq_len = len(self.tokens[index_of_data_instance]) + 1 # because start_index of piece_ids is 1 instead of 0
+            for i in range(len(self.labels[index_of_data_instance])):
+                if self.labels[index_of_data_instance][i] != 0:
+                    true_label.append(self.labels[index_of_data_instance][i])
+                    trigger_word.append(self.spans[index_of_data_instance][i])
+
+            set_label_in_one_sentence = set(true_label)
+            true_one_hot_trigger_vector = torch.zeros(num_label)
+            for i in set_label_in_one_sentence:
+                true_one_hot_trigger_vector += torch.eye(num_label)[i]
+
+            true_one_hot_label_vector = torch.zeros(seq_len)
+            trigger = []
+            for i in trigger_word:
+                trigger.extend(i)
+
+            set_trig = set(trigger)
+            for i in set_trig:
+                true_one_hot_label_vector += torch.eye(seq_len)[i]
+            
+            self.true_one_hot_label_vector.append(true_one_hot_label_vector)
+            self.true_one_hot_trigger_vector.append(true_one_hot_trigger_vector)
+        # return true_one_hot_trigger_vector, true_one_hot_label_vector
         # self.requires_cl.extend(requires_cl)
     # def collate_fn(self, batch):
     #     batch = pad_sequence([torch.LongTensor(item) for item in batch[2]])
     #     pass
+
+# def get_one_hot_true_label_and_true_trigger(data_instance, num_label):
+#     true_label = []
+#     trigger_word = []
+#     seq_len = len(data_instance["piece_ids"]) + 1 # because start_index of piece_ids is 1 instead of 0
+#     for i in range(len(data_instance["label"])):
+#         if data_instance["label"][i] != 0:
+#             true_label.append(data_instance["label"][i])
+#             trigger_word.append(data_instance["span"][i])
+
+#     set_label_in_one_sentence = set(true_label)
+#     true_one_hot_trigger_vector = torch.zeros(num_label)
+#     for i in set_label_in_one_sentence:
+#         true_one_hot_trigger_vector += torch.eye(num_label)[i]
+
+#     true_one_hot_label_vector = torch.zeros(seq_len)
+#     trigger = []
+#     for i in trigger_word:
+#         trigger.extend(i)
+
+#     set_trig = set(trigger)
+#     for i in set_trig:
+#         true_one_hot_label_vector += torch.eye(seq_len)[i]
+#     return true_one_hot_trigger_vector, true_one_hot_label_vector
 
 def collect_dataset(dataset, root, split, label2idx, stage_id, labels):
     if split == 'train':
