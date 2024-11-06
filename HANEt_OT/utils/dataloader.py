@@ -28,7 +28,8 @@ class MAVEN_Dataset(Dataset):
         # for label_ls in labels:
         #     self.labels.append([self.label2idx[label]  for label in label_ls])
     def __getitem__(self, index):
-        return [self.tokens[index], self.labels[index], self.masks[index], self.spans[index],self.true_one_hot_trigger_vector[index],self.true_one_hot_label_vector[index]]
+        return [self.tokens[index], self.labels[index], self.masks[index], self.spans[index]]
+    # ,self.true_one_hot_trigger_vector[index],self.true_one_hot_label_vector[index]]
     def __len__(self):
         return len(self.labels)
     def extend(self, tokens, labels, masks, spans):
