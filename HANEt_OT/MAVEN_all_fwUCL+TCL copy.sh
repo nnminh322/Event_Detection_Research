@@ -11,7 +11,7 @@ do
                     for n in ACE MAVEN
                     do
                         echo $n $m $l $k $j $i
-                        python train.py \
+                        python train_copy.py \
                             --data-root ./data_incremental \
                             --dataset $n \
                             --backbone bert-base-uncased \

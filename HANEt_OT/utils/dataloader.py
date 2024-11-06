@@ -37,32 +37,32 @@ class MAVEN_Dataset(Dataset):
         self.masks.extend(masks)
         self.spans.extend(spans)
     
-    def get_one_hot_true_label_and_true_trigger(self, num_label):
-        for index_of_data_instance in range(self.__len__()):
-            true_label = []
-            trigger_word = []
-            seq_len = len(self.tokens[index_of_data_instance]) + 1 # because start_index of piece_ids is 1 instead of 0
-            for i in range(len(self.labels[index_of_data_instance])):
-                if self.labels[index_of_data_instance][i] != 0:
-                    true_label.append(self.labels[index_of_data_instance][i])
-                    trigger_word.append(self.spans[index_of_data_instance][i])
+    # def get_one_hot_true_label_and_true_trigger(self, num_label):
+    #     for index_of_data_instance in range(self.__len__()):
+    #         true_label = []
+    #         trigger_word = []
+    #         seq_len = len(self.tokens[index_of_data_instance]) + 1 # because start_index of piece_ids is 1 instead of 0
+    #         for i in range(len(self.labels[index_of_data_instance])):
+    #             if self.labels[index_of_data_instance][i] != 0:
+    #                 true_label.append(self.labels[index_of_data_instance][i])
+    #                 trigger_word.append(self.spans[index_of_data_instance][i])
 
-            set_label_in_one_sentence = set(true_label)
-            true_one_hot_trigger_vector = torch.zeros(num_label)
-            for i in set_label_in_one_sentence:
-                true_one_hot_trigger_vector += torch.eye(num_label)[i]
+    #         set_label_in_one_sentence = set(true_label)
+    #         true_one_hot_trigger_vector = torch.zeros(num_label)
+    #         for i in set_label_in_one_sentence:
+    #             true_one_hot_trigger_vector += torch.eye(num_label)[i]
 
-            true_one_hot_label_vector = torch.zeros(seq_len)
-            trigger = []
-            for i in trigger_word:
-                trigger.extend(i)
+    #         true_one_hot_label_vector = torch.zeros(seq_len)
+    #         trigger = []
+    #         for i in trigger_word:
+    #             trigger.extend(i)
 
-            set_trig = set(trigger)
-            for i in set_trig:
-                true_one_hot_label_vector += torch.eye(seq_len)[i]
+    #         set_trig = set(trigger)
+    #         for i in set_trig:
+    #             true_one_hot_label_vector += torch.eye(seq_len)[i]
             
-            self.true_one_hot_label_vector.append(true_one_hot_label_vector)
-            self.true_one_hot_trigger_vector.append(true_one_hot_trigger_vector)
+    #         self.true_one_hot_label_vector.append(true_one_hot_label_vector)
+    #         self.true_one_hot_trigger_vector.append(true_one_hot_trigger_vector)
         # return true_one_hot_trigger_vector, true_one_hot_label_vector
         # self.requires_cl.extend(requires_cl)
     # def collate_fn(self, batch):
