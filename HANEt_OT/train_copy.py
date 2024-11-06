@@ -153,10 +153,10 @@ def train(local_rank, args):
                 train_span = [torch.LongTensor(item).to(device) for item in train_span]
 
                 print("size ---------------")
-                print(train_x.size)
-                print(train_y.size)
-                print(train_masks.size)
-                print(train_span.size)
+                print(len(train_x))
+                print(len(train_y))
+                print(len(train_masks))
+                print(len(train_span))
 
                 print('sample ---------------')
                 print(train_x)
