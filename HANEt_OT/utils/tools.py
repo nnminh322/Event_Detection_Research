@@ -59,3 +59,56 @@ def collect_from_json(dataset, root, split):
     #     data = extract_single_dict(data)
 
     return data
+
+
+
+def get_one_hot_true_label_and_true_trigger(data_instance, num_label):
+    true_label = []
+    true_trigger = []
+    seq_len = len(data_instance["piece_ids"]) # because start_index of piece_ids is 1 instead of 0
+    
+    for i in range(len(data_instance["label"])):
+        if data_instance["label"][i] != 0:
+            true_label.append(data_instance["label"][i])
+            true_trigger.append(data_instance["span"][i])
+
+
+    true_one_hot_label_vector = torch.zeros(num_label)
+    true_one_hot_trigger_vector = torch.zeros(seq_len)
+
+    set_label_in_one_sentence = set([label.item() for label in true_label])
+    for i in set_label_in_one_sentence:
+        true_one_hot_label_vector += torch.eye(num_label)[i]
+
+
+    list_trigger = [trigger.tolist() for trigger in true_trigger]
+    trigger = []
+    for i in list_trigger:
+        trigger.extend(i)
+
+    set_trig_in_one_sentence = set(trigger)
+
+    for i in set_trig_in_one_sentence:
+        true_one_hot_trigger_vector += torch.eye(seq_len)[i]
+    
+    return true_one_hot_trigger_vector, true_one_hot_label_vector
+
+
+def true_label_and_trigger(train_x,train_y,train_masks, train_span, class_num):
+    num_instance = len(train_x)
+    true_one_hot_label_vectors = []
+    true_one_hot_trigger_vectors = []
+    for i in range(num_instance):
+        data_instace={
+            'piece_ids': train_x[i],
+            'label': train_y[i],
+            'span': train_span[i],
+            'mask': train_masks[i]
+        }
+
+        true_one_hot_trigger_vector, true_one_hot_label_vector = get_one_hot_true_label_and_true_trigger(data_instance=data_instace,num_label=class_num)
+        true_one_hot_trigger_vectors.append(true_one_hot_trigger_vector)
+        true_one_hot_label_vectors.append(true_one_hot_label_vector)
+    return true_one_hot_trigger_vectors, true_one_hot_label_vectors
+
+        
