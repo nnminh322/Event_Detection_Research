@@ -18,6 +18,7 @@ import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
 
+
 def train(local_rank, args):
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
@@ -164,7 +165,11 @@ def train(local_rank, args):
                 print(train_masks)
                 print(train_span)
                 
-                print('end===================')
+                print('true_trig and true_label')
+                true_trig, true_label = true_label_and_trigger(train_x=train_x,train_y=train_y,train_masks=train_masks,train_span=train_span,class_num=args.class_num+1)
+                print(true_trig)
+                print(true_label)
+                print('end--------------------')
                 ##
                 # true_label = []
                 # trigger_word = []
