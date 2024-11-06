@@ -90,7 +90,8 @@ def get_one_hot_true_label_and_true_trigger(data_instance, num_label):
 
     for i in set_trig_in_one_sentence:
         true_one_hot_trigger_vector += torch.eye(seq_len)[i]
-    
+    true_one_hot_trigger_vector = true_one_hot_trigger_vector.to(device)
+    true_one_hot_label_vector = true_one_hot_label_vector.to(device)
     return true_one_hot_trigger_vector, true_one_hot_label_vector
 
 
@@ -109,6 +110,8 @@ def true_label_and_trigger(train_x,train_y,train_masks, train_span, class_num):
         true_one_hot_trigger_vector, true_one_hot_label_vector = get_one_hot_true_label_and_true_trigger(data_instance=data_instace,num_label=class_num)
         true_one_hot_trigger_vectors.append(true_one_hot_trigger_vector)
         true_one_hot_label_vectors.append(true_one_hot_label_vector)
+    true_one_hot_trigger_vectors = [x.to(device) for x in true_one_hot_trigger_vectors]
+    true_one_hot_label_vectors = [x.to(device) for x in true_one_hot_label_vectors]
     return true_one_hot_trigger_vectors, true_one_hot_label_vectors
 
         
