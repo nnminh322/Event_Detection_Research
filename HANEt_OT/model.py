@@ -39,7 +39,7 @@ class BertED(nn.Module):
         self.label_embeddings = nn.Linear(class_num, self.backbone.config.hidden_size)
         nn.init.xavier_normal_(self.label_embeddings.weight)
 
-        self.trigger_ffn = nn.Linear(self.hidden_size, 1)
+        self.trigger_ffn = nn.Linear(self.backbone.config.hidden_size, 1)
         self.type_ffn = nn.Linear(
             self.hidden_size + self.hidden_size, 1
         )  # 2 * Hidden_size -> 1
