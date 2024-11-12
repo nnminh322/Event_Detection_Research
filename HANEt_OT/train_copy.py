@@ -195,6 +195,9 @@ def train(local_rank, args):
                 print('trigg------')
                 print(len(trig_feat))
                 print(trig_feat)
+                print('reps----')
+                print(len(return_dict['reps']))
+                print(return_dict['reps'])
         #         for i in range(len(train_y)):
         #             invalid_mask_label = torch.BoolTensor([item not in learned_types for item in train_y[i]]).to(device)
         #             train_y[i].masked_fill_(invalid_mask_label, 0)
