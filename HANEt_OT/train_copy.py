@@ -10,13 +10,15 @@ from model import BertED
 from tqdm import tqdm
 from exemplars import Exemplars
 from copy import deepcopy
-from torch.utils.tensorboard import SummaryWriter   
+from torch.utils.tensorboard import SummaryWriter
 import os, time
 import logging
 import torch.distributed as dist
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
+from utils.computeLoss import compute_loss_TI
+
 
 
 def train(local_rank, args):
@@ -25,103 +27,205 @@ def train(local_rank, args):
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     formatter = logging.Formatter(
-            "[%(asctime)s]-[%(filename)s line:%(lineno)d]:%(message)s "
-        )
+        "[%(asctime)s]-[%(filename)s line:%(lineno)d]:%(message)s "
+    )
     ch = logging.StreamHandler()
     ch.setLevel(logging.INFO)
     ch.setFormatter(formatter)
     logger.addHandler(ch)
-    cur_time = time.strftime('%Y-%m-%d-%H-%M-%S')
+    cur_time = time.strftime("%Y-%m-%d-%H-%M-%S")
     if args.log:
-        if not os.path.exists(os.path.join(args.tb_dir, args.dataset, args.joint_da_loss, str(args.class_num) + "class", str(args.shot_num) + "shot", args.cl_aug, args.log_name, "perm" + str(args.perm_id))):
-            os.makedirs(os.path.join(args.tb_dir, args.dataset, args.joint_da_loss, str(args.class_num) + "class", str(args.shot_num) + "shot", args.cl_aug, args.log_name, "perm" + str(args.perm_id)))
-        if not os.path.exists(os.path.join(args.log_dir, args.dataset, args.joint_da_loss, str(args.class_num) + "class", str(args.shot_num) + "shot", args.cl_aug, args.log_name, "perm" + str(args.perm_id))):
-            os.makedirs(os.path.join(args.log_dir, args.dataset, args.joint_da_loss, str(args.class_num) + "class", str(args.shot_num) + "shot", args.cl_aug, args.log_name, "perm" + str(args.perm_id)))
-        writer = SummaryWriter(os.path.join(args.tb_dir, args.dataset, args.joint_da_loss, str(args.class_num) + "class", str(args.shot_num) + "shot", args.cl_aug, args.log_name, "perm" + str(args.perm_id), cur_time))
-        fh = logging.FileHandler(os.path.join(args.log_dir, args.dataset, args.joint_da_loss, str(args.class_num) + "class", str(args.shot_num) + "shot", args.cl_aug, args.log_name, "perm" + str(args.perm_id), cur_time + '.log'), mode='a')
+        if not os.path.exists(
+            os.path.join(
+                args.tb_dir,
+                args.dataset,
+                args.joint_da_loss,
+                str(args.class_num) + "class",
+                str(args.shot_num) + "shot",
+                args.cl_aug,
+                args.log_name,
+                "perm" + str(args.perm_id),
+            )
+        ):
+            os.makedirs(
+                os.path.join(
+                    args.tb_dir,
+                    args.dataset,
+                    args.joint_da_loss,
+                    str(args.class_num) + "class",
+                    str(args.shot_num) + "shot",
+                    args.cl_aug,
+                    args.log_name,
+                    "perm" + str(args.perm_id),
+                )
+            )
+        if not os.path.exists(
+            os.path.join(
+                args.log_dir,
+                args.dataset,
+                args.joint_da_loss,
+                str(args.class_num) + "class",
+                str(args.shot_num) + "shot",
+                args.cl_aug,
+                args.log_name,
+                "perm" + str(args.perm_id),
+            )
+        ):
+            os.makedirs(
+                os.path.join(
+                    args.log_dir,
+                    args.dataset,
+                    args.joint_da_loss,
+                    str(args.class_num) + "class",
+                    str(args.shot_num) + "shot",
+                    args.cl_aug,
+                    args.log_name,
+                    "perm" + str(args.perm_id),
+                )
+            )
+        writer = SummaryWriter(
+            os.path.join(
+                args.tb_dir,
+                args.dataset,
+                args.joint_da_loss,
+                str(args.class_num) + "class",
+                str(args.shot_num) + "shot",
+                args.cl_aug,
+                args.log_name,
+                "perm" + str(args.perm_id),
+                cur_time,
+            )
+        )
+        fh = logging.FileHandler(
+            os.path.join(
+                args.log_dir,
+                args.dataset,
+                args.joint_da_loss,
+                str(args.class_num) + "class",
+                str(args.shot_num) + "shot",
+                args.cl_aug,
+                args.log_name,
+                "perm" + str(args.perm_id),
+                cur_time + ".log",
+            ),
+            mode="a",
+        )
         fh.setLevel(logging.INFO)
         fh.setFormatter(formatter)
         logger.addHandler(fh)
     for arg in vars(args):
-        logger.info('{}={}'.format(arg.upper(), getattr(args, arg)))
-    logger.info('')
-    device = torch.device(args.device if torch.cuda.is_available() and args.device != 'cpu' else "cpu")  # type: ignore
-    streams = collect_from_json(args.dataset, args.stream_root, 'stream')
-    label2idx = {0:0}
+        logger.info("{}={}".format(arg.upper(), getattr(args, arg)))
+    logger.info("")
+    device = torch.device(args.device if torch.cuda.is_available() and args.device != "cpu" else "cpu")  # type: ignore
+    streams = collect_from_json(args.dataset, args.stream_root, "stream")
+    label2idx = {0: 0}
     for st in streams:
         for lb in st:
             if lb not in label2idx:
                 label2idx[lb] = len(label2idx)
     streams_indexed = [[label2idx[l] for l in st] for st in streams]
-    model = BertED(args.class_num+1, args.input_map) # define model
+    model = BertED(args.class_num + 1, args.input_map)  # define model
     model.to(device)
-    optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=args.decay, eps=args.adamw_eps, betas=(0.9, 0.999)) #TODO: Hyper parameters
-    if args.parallel == 'DDP':
+    optimizer = AdamW(
+        model.parameters(),
+        lr=args.lr,
+        weight_decay=args.decay,
+        eps=args.adamw_eps,
+        betas=(0.9, 0.999),
+    )  # TODO: Hyper parameters
+    if args.parallel == "DDP":
         torch.cuda.set_device(local_rank)
         dist.init_process_group("nccl", rank=local_rank, world_size=args.world_size)
-        model = DDP(model, device_ids= [local_rank], find_unused_parameters=True)
-    elif args.parallel == 'DP':
-        os.environ["CUDA_VISIBLE_DEVICES"] = '0, 1, 2, 3, 4, 5, 6, 7' 
-        model = nn.DataParallel(model, device_ids=[int(it) for it in args.device_ids.split(" ")])
+        model = DDP(model, device_ids=[local_rank], find_unused_parameters=True)
+    elif args.parallel == "DP":
+        os.environ["CUDA_VISIBLE_DEVICES"] = "0, 1, 2, 3, 4, 5, 6, 7"
+        model = nn.DataParallel(
+            model, device_ids=[int(it) for it in args.device_ids.split(" ")]
+        )
     criterion_ce = nn.CrossEntropyLoss()
     criterion_fd = nn.CosineEmbeddingLoss()
     all_labels = []
-    all_labels = list(set([t for stream in streams_indexed for t in stream if t not in all_labels]))
+    all_labels = list(
+        set([t for stream in streams_indexed for t in stream if t not in all_labels])
+    )
     task_idx = [i for i in range(len(streams_indexed))]
     labels = all_labels.copy()
     learned_types = [0]
     prev_learned_types = [0]
     dev_scores_ls = []
-    exemplars = Exemplars() # TODO: 
+    exemplars = Exemplars()  # TODO:
     if args.resume:
         logger.info(f"Resuming from {args.resume}")
         state_dict = torch.load(args.resume)
-        model.load_state_dict(state_dict['model'])
-        optimizer.load_state_dict(state_dict['optimizer'])
-        task_idx = task_idx[state_dict['stage']:]
+        model.load_state_dict(state_dict["model"])
+        optimizer.load_state_dict(state_dict["optimizer"])
+        task_idx = task_idx[state_dict["stage"] :]
         # TODO: test use
-        labels = state_dict['labels']
-        learned_types = state_dict['learned_types']
-        prev_learned_types = state_dict['prev_learned_types']
+        labels = state_dict["labels"]
+        learned_types = state_dict["learned_types"]
+        prev_learned_types = state_dict["prev_learned_types"]
     if args.early_stop:
         e_pth = "./outputs/early_stop/" + args.log_name + ".pth"
     for stage in task_idx:
         logger.info(f"Stage {stage}")
-        logger.info(f'Loading train instances for stage {stage}')
+        logger.info(f"Loading train instances for stage {stage}")
         if args.single_label:
-            stream_dataset = collect_sldataset(args.dataset, args.data_root, 'train', label2idx, stage, streams[stage])
+            stream_dataset = collect_sldataset(
+                args.dataset, args.data_root, "train", label2idx, stage, streams[stage]
+            )
         else:
-            stream_dataset = collect_dataset(args.dataset, args.data_root, 'train', label2idx, stage, [i for item in streams[stage:] for i in item])
-        if args.parallel == 'DDP':
+            stream_dataset = collect_dataset(
+                args.dataset,
+                args.data_root,
+                "train",
+                label2idx,
+                stage,
+                [i for item in streams[stage:] for i in item],
+            )
+        if args.parallel == "DDP":
             stream_sampler = DistributedSampler(stream_dataset, shuffle=True)
             org_loader = DataLoader(
                 dataset=stream_dataset,
                 sampler=stream_sampler,
                 batch_size=args.batch_size,
-                collate_fn= lambda x:x)
+                collate_fn=lambda x: x,
+            )
         else:
             org_loader = DataLoader(
                 dataset=stream_dataset,
                 shuffle=True,
                 batch_size=args.batch_size,
-                collate_fn= lambda x:x)
+                collate_fn=lambda x: x,
+            )
         stage_loader = org_loader
         if stage > 0:
             if args.early_stop and no_better == args.patience:
                 logger.info("Early stopping finished, loading stage: " + str(stage))
                 model.load_state_dict(torch.load(e_pth))
-            prev_model = deepcopy(model) # TODO:test use
+            prev_model = deepcopy(model)  # TODO:test use
             for item in streams_indexed[stage - 1]:
                 if not item in prev_learned_types:
                     prev_learned_types.append(item)
-            logger.info(f'Loading train instances without negative instances for stage {stage}')
-            exemplar_dataset = collect_exemplar_dataset(args.dataset, args.data_root, 'train', label2idx, stage-1, streams[stage-1])
+            logger.info(
+                f"Loading train instances without negative instances for stage {stage}"
+            )
+            exemplar_dataset = collect_exemplar_dataset(
+                args.dataset,
+                args.data_root,
+                "train",
+                label2idx,
+                stage - 1,
+                streams[stage - 1],
+            )
             exemplar_loader = DataLoader(
                 dataset=exemplar_dataset,
                 batch_size=64,
                 shuffle=True,
-                collate_fn=lambda x:x)
-            exemplars.set_exemplars(prev_model, exemplar_loader, len(learned_types), device)
+                collate_fn=lambda x: x,
+            )
+            exemplars.set_exemplars(
+                prev_model, exemplar_loader, len(learned_types), device
+            )
             if not args.no_replay:
                 stage_loader = exemplars.build_stage_loader(stream_dataset)
             if args.rep_aug != "none":
@@ -131,14 +235,14 @@ def train(local_rank, args):
         for item in streams_indexed[stage]:
             if not item in learned_types:
                 learned_types.append(item)
-        logger.info(f'Learned types: {learned_types}')
-        logger.info(f'Previous learned types: {prev_learned_types}')
+        logger.info(f"Learned types: {learned_types}")
+        logger.info(f"Previous learned types: {prev_learned_types}")
         dev_score = None
         no_better = 0
         for ep in range(args.epochs):
             if stage == 0 and args.skip_first:
                 continue
-            logger.info('-' * 100)
+            logger.info("-" * 100)
             logger.info(f"Stage {stage}: Epoch {ep}")
             logger.info("Training process")
             model.train()
@@ -152,17 +256,23 @@ def train(local_rank, args):
                 train_masks = torch.LongTensor(train_masks).to(device)
                 train_y = [torch.LongTensor(item).to(device) for item in train_y]
                 train_span = [torch.LongTensor(item).to(device) for item in train_span]
-                print('data x-----')
+                print("data x-----")
                 print(train_x)
-                print('data y-----')
+                print("data y-----")
 
                 print(train_y)
-                print('data span-----')
+                print("data span-----")
 
                 print(train_span)
-                print('data-----')
+                print("data-----")
 
-                true_trig, true_label = true_label_and_trigger(train_x=train_x,train_y=train_y,train_masks=train_masks,train_span=train_span,class_num=args.class_num+1)
+                true_trig, true_label = true_label_and_trigger(
+                    train_x=train_x,
+                    train_y=train_y,
+                    train_masks=train_masks,
+                    train_span=train_span,
+                    class_num=args.class_num + 1,
+                )
 
                 ##
                 # true_label = []
@@ -191,30 +301,30 @@ def train(local_rank, args):
                 ##
                 return_dict = model(train_x, train_masks, train_span)
 
-                outputs, context_feat, trig_feat = return_dict['outputs'], return_dict['context_feat'], return_dict['trig_feat']
-                print('trigg------')
+                outputs, context_feat, trig_feat = (
+                    return_dict["outputs"],
+                    return_dict["context_feat"],
+                    return_dict["trig_feat"],
+                )
+                print("trigg------")
                 print(len(trig_feat))
                 print(trig_feat)
-                print('reps----')
-                print(len(return_dict['reps']))
-                print(return_dict['reps'])
+                print("reps----")
+                print(len(return_dict["reps"]))
+                print(return_dict["reps"])
 
-                p_wi = return_dict['p_wi']
-                p_tj = return_dict['p_tj']
+                p_wi = return_dict["p_wi"]
+                p_tj = return_dict["p_tj"]
 
-                print(f'size p_wi: {p_wi.size()}')
-                print(p_wi)
-                print(f'size true_trig {true_trig.size()}')
-                print(true_trig)
-                print(f'size p_tj: {p_tj.size()}')
-                print(p_tj)
+                loss_TI = compute_loss_TI(p_wi=p_wi,true_trig=true_trig)
+                print(f'loss_TI: {loss_TI}')
         #         for i in range(len(train_y)):
         #             invalid_mask_label = torch.BoolTensor([item not in learned_types for item in train_y[i]]).to(device)
         #             train_y[i].masked_fill_(invalid_mask_label, 0)
         #         loss, loss_ucl, loss_aug, loss_fd, loss_pd, loss_tlcl = 0, 0, 0, 0, 0, 0
         #         ce_y = torch.cat(train_y)
         #         ce_outputs = outputs
-        #         if (args.ucl or args.tlcl) and (stage > 0 or (args.skip_first_cl != "ucl+tlcl" and stage == 0)):                        
+        #         if (args.ucl or args.tlcl) and (stage > 0 or (args.skip_first_cl != "ucl+tlcl" and stage == 0)):
         #             reps = return_dict['reps']
         #             bs, hdim = reps.shape
         #             aug_repeat_times = args.aug_repeat_times
@@ -254,7 +364,7 @@ def train(local_rank, args):
         #             # else:
         #             da_return_dict = model(da_x, da_masks, da_span)
         #             da_outputs, da_reps, da_context_feat, da_trig_feat = da_return_dict['outputs'], da_return_dict['reps'], da_return_dict['context_feat'], da_return_dict['trig_feat']
-                    
+
         #             if args.ucl:
         #                 if not ((args.skip_first_cl == "ucl" or args.skip_first_cl == "ucl+tlcl") and stage == 0):
         #                     ucl_reps = torch.cat([reps, da_reps])
@@ -262,7 +372,7 @@ def train(local_rank, args):
         #                     Adj_mask_ucl = torch.zeros(bs * (1 + aug_repeat_times), bs * (1 + aug_repeat_times)).to(device)
         #                     for i in range(aug_repeat_times):
         #                         Adj_mask_ucl += torch.eye(bs * (1 + aug_repeat_times)).to(device)
-        #                         Adj_mask_ucl = torch.roll(Adj_mask_ucl, bs, -1)                    
+        #                         Adj_mask_ucl = torch.roll(Adj_mask_ucl, bs, -1)
         #                     loss_ucl = compute_CLLoss(Adj_mask_ucl, ucl_reps, bs * (1 + aug_repeat_times))
         #             if args.tlcl:
         #                 if not ((args.skip_first_cl == "tlcl" or args.skip_first_cl == "ucl+tlcl") and stage == 0):
@@ -291,7 +401,7 @@ def train(local_rank, args):
         #                 exemplar_x = torch.LongTensor(exemplar_x).to(device)
         #                 exemplar_masks = torch.LongTensor(exemplar_masks).to(device)
         #                 exemplars_y = [torch.LongTensor(item).to(device) for item in exemplars_y]
-        #                 exemplar_span = [torch.LongTensor(item).to(device) for item in exemplar_span]            
+        #                 exemplar_span = [torch.LongTensor(item).to(device) for item in exemplar_span]
         #                 if args.rep_aug == "relative":
         #                     aug_return_dict = model(exemplar_x, exemplar_masks, exemplar_span, torch.sqrt(torch.stack(exemplar_radius)).unsqueeze(-1))
         #                 else:
@@ -305,7 +415,7 @@ def train(local_rank, args):
         #             outputs_aug = outputs_aug[:, learned_types].squeeze(-1)
         #             loss_aug = criterion_ce(outputs_aug, torch.cat(aug_y))
         #             loss = args.gamma * loss + args.theta * loss_aug
-                    
+
         #         if stage > 0 and args.distill != "none":
         #             prev_model.eval()
         #             with torch.no_grad():
@@ -340,10 +450,10 @@ def train(local_rank, args):
         #                 loss = loss * (1 - w) + (loss_fd + loss_pd) * w
         #             else:
         #                 loss = loss + args.alpha * loss_fd + args.beta * loss_pd
-                   
+
         #         loss.backward()
-        #         optimizer.step() 
-                
+        #         optimizer.step()
+
         #     logger.info(f'loss_ce: {loss_ce}')
         #     logger.info(f'loss_ucl: {loss_ucl}')
         #     logger.info(f'loss_tlcl: {loss_tlcl}')
@@ -352,7 +462,7 @@ def train(local_rank, args):
         #     logger.info(f'loss_fd: {loss_fd}')
         #     logger.info(f'loss_pd: {loss_pd}')
         #     logger.info(f'loss_all: {loss}')
-         
+
         #     if ((ep + 1) % args.eval_freq == 0 and args.early_stop) or (ep + 1) == args.epochs: # TODO TODO
         #         # Evaluation process
         #         logger.info("Evaluation process")
@@ -373,7 +483,7 @@ def train(local_rank, args):
         #                 eval_x = torch.LongTensor(eval_x).to(device)
         #                 eval_masks = torch.LongTensor(eval_masks).to(device)
         #                 eval_y = [torch.LongTensor(item).to(device) for item in eval_y]
-        #                 eval_span = [torch.LongTensor(item).to(device) for item in eval_span]  
+        #                 eval_span = [torch.LongTensor(item).to(device) for item in eval_span]
         #                 eval_return_dict = model(eval_x, eval_masks, eval_span)
         #                 eval_outputs = eval_return_dict['outputs']
         #                 valid_mask_eval_op = torch.BoolTensor([idx in learned_types for idx in range(args.class_num + 1)]).to(device)
@@ -412,7 +522,7 @@ def train(local_rank, args):
         #         labels.pop(labels.index(tp))
         # save_stage = stage
         # if args.save_dir and local_rank == 0:
-        #     state = {'model':model.state_dict(), 'optimizer':optimizer.state_dict(), 'stage':stage + 1, 
+        #     state = {'model':model.state_dict(), 'optimizer':optimizer.state_dict(), 'stage':stage + 1,
         #                     'labels':labels, 'learned_types':learned_types, 'prev_learned_types':prev_learned_types}
         #     save_pth = os.path.join(args.save_dir, "perm" + str(args.perm_id))
         #     save_name = f"stage_{save_stage}_{cur_time}.pth"
@@ -423,18 +533,11 @@ def train(local_rank, args):
         #     os.remove(e_pth)
 
 
-
-
-
 if __name__ == "__main__":
     args = parse_arguments()
-    if args.parallel == 'DDP':
+    if args.parallel == "DDP":
         os.environ["MASTER_ADDR"] = "localhost"
         os.environ["MASTER_PORT"] = "29500"
-        mp.spawn(train,
-            args=(args, ),
-            nprocs=args.world_size,
-            join=True)
+        mp.spawn(train, args=(args,), nprocs=args.world_size, join=True)
     else:
         train(0, args)
-        
