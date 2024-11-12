@@ -198,6 +198,16 @@ def train(local_rank, args):
                 print('reps----')
                 print(len(return_dict['reps']))
                 print(return_dict['reps'])
+
+                p_wi = return_dict['p_wi']
+                p_tj = return_dict['p_tj']
+
+                print(f'size p_wi: {p_wi.size()}')
+                print(p_wi)
+                print(f'size true_trig {true_trig.size()}')
+                print(true_trig)
+                print(f'size p_tj: {p_tj.size()}')
+                print(p_tj)
         #         for i in range(len(train_y)):
         #             invalid_mask_label = torch.BoolTensor([item not in learned_types for item in train_y[i]]).to(device)
         #             train_y[i].masked_fill_(invalid_mask_label, 0)

@@ -51,8 +51,8 @@ class BertED(nn.Module):
         backbone_output = self.backbone(x, attention_mask=masks)
         x, pooled_feat = backbone_output[0], backbone_output[1]
         context_feature = x.view(-1, x.shape[-1])
-        e_cls =  x[:, 0, :].clone()
-        return_dict["reps"] = e_cls #reps a.k.a e_cls
+        e_cls = x[:, 0, :].clone()
+        return_dict["reps"] = e_cls  # reps a.k.a e_cls
         if span != None:
             outputs, trig_feature = [], []
             for i in range(len(span)):
@@ -91,7 +91,9 @@ class BertED(nn.Module):
         last_hidden_state = backbone_output.last_hidden_state
         p_wi = torch.sigmoid(self.trigger_ffn(last_hidden_state)).squeeze(-1)
 
-        label_embeddings = self.label_embeddings.weight  # [Num_label, hidden_size]
+        label_embeddings = self.label_embeddings.weight.transpose(
+            0, 1
+        )  # [Num_label, hidden_size]
         label_embeddings = label_embeddings.unsqueeze(0).repeat(
             x.size(0), 1, 1
         )  # [Num_label, hidden_size] -> [Batch_size, Num_label, Hidden_size]
@@ -99,12 +101,14 @@ class BertED(nn.Module):
         # e_cls = e_cls.unsqueeze(1).repeat(
         #     1, self.num_labels, 1
         # # )  # [Batch_size, hidden_size] -> [Batch_size, Num_label, hidden_size]
-        e_cls_repeat_n_class  = e_cls.unsqueeze(1).repeat([1,self.class_num])
+        e_cls_repeat_n_class = e_cls.unsqueeze(1).repeat([1, self.class_num, 1])
         concat = torch.cat(
             [label_embeddings, e_cls_repeat_n_class], dim=-1
         )  # Concat in last size dimention
 
         p_tj = torch.sigmoid(self.type_ffn(concat)).squeeze(-1)
+        print(f"size p_wi: {p_wi.size()}")
+        print(f"size p_tj: {p_tj.size()}")
 
         return_dict["p_wi"] = p_wi
         return_dict["p_tj"] = p_tj
