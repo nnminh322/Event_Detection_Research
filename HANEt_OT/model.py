@@ -20,6 +20,7 @@ class BertED(nn.Module):
                 param.requires_grad = False
         else:
             print("Update bert parameters")
+        self.class_num = class_num
         self.is_input_mapping = input_map
         self.input_dim = self.backbone.config.hidden_size
         self.labels = labels
@@ -94,11 +95,13 @@ class BertED(nn.Module):
         label_embeddings = label_embeddings.unsqueeze(0).repeat(
             x.size(0), 1, 1
         )  # [Num_label, hidden_size] -> [Batch_size, Num_label, Hidden_size]
+
         # e_cls = e_cls.unsqueeze(1).repeat(
         #     1, self.num_labels, 1
         # # )  # [Batch_size, hidden_size] -> [Batch_size, Num_label, hidden_size]
+        e_cls_repeat_n_class  = e_cls.unsqueeze(1).repeat([1,self.class_num])
         concat = torch.cat(
-            [label_embeddings, e_cls], dim=-1
+            [label_embeddings, e_cls_repeat_n_class], dim=-1
         )  # Concat in last size dimention
 
         p_tj = torch.sigmoid(self.type_ffn(concat)).squeeze(-1)
