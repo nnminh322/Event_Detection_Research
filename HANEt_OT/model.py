@@ -50,7 +50,8 @@ class BertED(nn.Module):
         backbone_output = self.backbone(x, attention_mask=masks)
         x, pooled_feat = backbone_output[0], backbone_output[1]
         context_feature = x.view(-1, x.shape[-1])
-        return_dict["reps"] = x[:, 0, :].clone() #reps a.k.a e_cls
+        e_cls =  x[:, 0, :].clone()
+        return_dict["reps"] = e_cls #reps a.k.a e_cls
         if span != None:
             outputs, trig_feature = [], []
             for i in range(len(span)):
@@ -96,15 +97,15 @@ class BertED(nn.Module):
         # e_cls = e_cls.unsqueeze(1).repeat(
         #     1, self.num_labels, 1
         # # )  # [Batch_size, hidden_size] -> [Batch_size, Num_label, hidden_size]
-        # concat = torch.cat(
-        #     [label_embeddings, e_cls], dim=-1
-        # )  # Concat in last size dimention
+        concat = torch.cat(
+            [label_embeddings, e_cls], dim=-1
+        )  # Concat in last size dimention
 
-        # p_tj = torch.sigmoid(self.type_ffn(concat)).squeeze(-1)
+        p_tj = torch.sigmoid(self.type_ffn(concat)).squeeze(-1)
 
-        # return_dict["p_wi"] = p_wi
-        # return_dict["p_tj"] = p_tj
-        # return_dict["e_cls"] = e_cls
+        return_dict["p_wi"] = p_wi
+        return_dict["p_tj"] = p_tj
+        return_dict["e_cls"] = e_cls
 
         return return_dict
 
