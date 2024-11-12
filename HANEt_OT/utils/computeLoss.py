@@ -8,13 +8,13 @@ def compute_CLLoss(Adj_mask, reprs, matsize): # compute InfoNCELoss
         logits_max_cl, _ = torch.max(logits_cl, dim=-1, keepdim=True)
         logits_cl = logits_cl - logits_max_cl
     exp_logits_cl = torch.exp(logits_cl)
-    denom_cl = torch.sum(exp_logits_cl * (1 - torch.eye(matsize).to(device)), dim = -1) 
+    denom_cl = torch.sum(exp_logits_cl * (1 - torch.eye(matsize).to(args.device)), dim = -1) 
     log_prob_cl = -torch.mean((logits_cl - torch.log(denom_cl)) * Adj_mask, dim=-1)
     return torch.mean(log_prob_cl)
 
 def compute_loss_TI(p_wi, true_trig):
     loss_TI = 0.0
-    loss_TI = -torch.sum(true_trig * torch.log(p_wi) + (1 - true_trig) * torch.log(1 - p_wi), dim=-1)
-    
-    # Trả về trung bình loss trên toàn bộ batch
-    return loss_TI.mean()
+    for i in range(len(true_trig)):
+        loss_TI += -torch.dot(true_trig[i],torch.log(p_wi[i])) + torch.dot((1-true_trig[i]),torch.log(1-p_wi[i]))
+
+    return loss_TI / len(true_trig)
