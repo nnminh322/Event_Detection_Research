@@ -153,23 +153,8 @@ def train(local_rank, args):
                 train_y = [torch.LongTensor(item).to(device) for item in train_y]
                 train_span = [torch.LongTensor(item).to(device) for item in train_span]
 
-                print("size ---------------")
-                print(len(train_x[0]))
-                print(len(train_y[0]))
-                print(len(train_masks[0]))
-                print(len(train_span[0]))
-
-                print('sample ---------------')
-                print(train_x)
-                print(train_y)
-                print(train_masks)
-                print(train_span)
-                
-                print('true_trig and true_label')
                 true_trig, true_label = true_label_and_trigger(train_x=train_x,train_y=train_y,train_masks=train_masks,train_span=train_span,class_num=args.class_num+1)
-                print(true_trig)
-                print(true_label)
-                print('end--------------------')
+
                 ##
                 # true_label = []
                 # trigger_word = []
@@ -195,8 +180,11 @@ def train(local_rank, args):
                 # for i in set_trig:
                 #     true_one_hot_label_vector += torch.eye(seq_len)[i]
                 ##
-        #         return_dict = model(train_x, train_masks, train_span)
-        #         outputs, context_feat, trig_feat = return_dict['outputs'], return_dict['context_feat'], return_dict['trig_feat']
+                return_dict = model(train_x, train_masks, train_span)
+
+                outputs, context_feat, trig_feat = return_dict['outputs'], return_dict['context_feat'], return_dict['trig_feat']
+                print(len(trig_feat))
+                print(trig_feat)
         #         for i in range(len(train_y)):
         #             invalid_mask_label = torch.BoolTensor([item not in learned_types for item in train_y[i]]).to(device)
         #             train_y[i].masked_fill_(invalid_mask_label, 0)

@@ -50,7 +50,7 @@ class BertED(nn.Module):
         backbone_output = self.backbone(x, attention_mask=masks)
         x, pooled_feat = backbone_output[0], backbone_output[1]
         context_feature = x.view(-1, x.shape[-1])
-        return_dict["reps"] = x[:, 0, :].clone()
+        return_dict["reps"] = x[:, 0, :].clone() #reps a.k.a e_cls
         if span != None:
             outputs, trig_feature = [], []
             for i in range(len(span)):
