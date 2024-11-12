@@ -152,7 +152,10 @@ def train(local_rank, args):
                 train_masks = torch.LongTensor(train_masks).to(device)
                 train_y = [torch.LongTensor(item).to(device) for item in train_y]
                 train_span = [torch.LongTensor(item).to(device) for item in train_span]
-
+                print('data-----')
+                print(train_x)
+                print(train_y)
+                print(train_span)
                 true_trig, true_label = true_label_and_trigger(train_x=train_x,train_y=train_y,train_masks=train_masks,train_span=train_span,class_num=args.class_num+1)
 
                 ##
@@ -183,6 +186,7 @@ def train(local_rank, args):
                 return_dict = model(train_x, train_masks, train_span)
 
                 outputs, context_feat, trig_feat = return_dict['outputs'], return_dict['context_feat'], return_dict['trig_feat']
+                print('trigg------')
                 print(len(trig_feat))
                 print(trig_feat)
         #         for i in range(len(train_y)):
