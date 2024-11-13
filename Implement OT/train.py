@@ -208,7 +208,7 @@ def main():
             p_wi, p_tj, last_hidden_state, e_cls = model(
                 input_ids, attention_mask, token_type_ids
             )
-
+            
             E = last_hidden_state
             T = model.get_label_embedding()
             E_exp = E.unsqueeze(2)

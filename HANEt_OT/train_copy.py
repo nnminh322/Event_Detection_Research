@@ -329,27 +329,30 @@ def train(local_rank, args):
                 E_exp = E.unsqueeze(2)
                 T_exp = T.unsqueeze(0).unsqueeze(0)
                 C = torch.norm(E_exp - T_exp, p=2, dim=-1)
+                print(C.size())
                 pi_star = compute_optimal_transport(D_W_P, D_T_P, C)
-                # Tính L_task: Negative Log-Likelihood Loss
-                pi_star_golden = pi_star.gather(2, true_label.unsqueeze(2)).squeeze(2)
-                L_task = F.binary_cross_entropy(pi_star_golden, reduction="mean")
+                print(pi_star.size())
+                print(true_label.size())
+                # # Tính L_task: Negative Log-Likelihood Loss
+                # pi_star_golden = pi_star.gather(2, true_label.unsqueeze(2)).squeeze(2)
+                # L_task = F.binary_cross_entropy(pi_star_golden, reduction="mean")
 
-                pi_g = F.one_hot(true_label, num_classes=model.num_labels).float()
-                Dist_pi_star = (pi_star * C).sum(dim=[1, 2])
-                Dist_pi_g = (pi_g * C).sum(dim=[1, 2])
-                L_OT = torch.abs(Dist_pi_star - Dist_pi_g).mean()
-                alpha_task = 1.0
-                alpha_OT = 0.01
-                alpha_LT_I = 0.05
-                alpha_LT_P = 0.01
-                loss_ot = (
-                    alpha_task * L_task
-                    + alpha_OT * L_OT
-                    + alpha_LT_I * loss_TI
-                    + alpha_LT_P * loss_TP
-                )
+                # pi_g = F.one_hot(true_label, num_classes=model.num_labels).float()
+                # Dist_pi_star = (pi_star * C).sum(dim=[1, 2])
+                # Dist_pi_g = (pi_g * C).sum(dim=[1, 2])
+                # L_OT = torch.abs(Dist_pi_star - Dist_pi_g).mean()
+                # alpha_task = 1.0
+                # alpha_OT = 0.01
+                # alpha_LT_I = 0.05
+                # alpha_LT_P = 0.01
+                # loss_ot = (
+                #     alpha_task * L_task
+                #     + alpha_OT * L_OT
+                #     + alpha_LT_I * loss_TI
+                #     + alpha_LT_P * loss_TP
+                # )
 
-                print(loss_ot)
+                # print(loss_ot)
 
                 # loss, loss_ucl, loss_aug, loss_fd, loss_pd, loss_tlcl, loss_ot = 0, 0, 0, 0, 0, 0, 0
         #         ce_y = torch.cat(train_y)

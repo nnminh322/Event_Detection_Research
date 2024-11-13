@@ -107,8 +107,8 @@ class BertED(nn.Module):
         )  # Concat in last size dimention
 
         p_tj = torch.sigmoid(self.type_ffn(concat)).squeeze(-1)
-        print(f"size p_wi: {p_wi.size()}")
-        print(f"size p_tj: {p_tj.size()}")
+        # print(f"size p_wi: {p_wi.size()}")
+        # print(f"size p_tj: {p_tj.size()}")
 
         return_dict["p_wi"] = p_wi
         return_dict["p_tj"] = p_tj
