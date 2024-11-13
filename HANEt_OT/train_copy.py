@@ -306,37 +306,41 @@ def train(local_rank, args):
                     return_dict["context_feat"],
                     return_dict["trig_feat"],
                 )
-                print("trigg------")
-                print(len(trig_feat))
-                print(trig_feat)
-                print("reps----")
-                print(len(return_dict["reps"]))
-                print(return_dict["reps"])
+                # print("trigg------")
+                # print(len(trig_feat))
+                # print(trig_feat)
+                # print("reps----")
+                # print(len(return_dict["reps"]))
+                # print(return_dict["reps"])
 
-                p_wi = return_dict["p_wi"]
-                p_tj = return_dict["p_tj"]
+                # p_wi = return_dict["p_wi"]
+                # p_tj = return_dict["p_tj"]
 
-                loss_TI = compute_loss_TI(p_wi=p_wi,true_trig=true_trig)
-                print(f'loss_TI: {loss_TI}')
+                # loss_TI = compute_loss_TI(p_wi=p_wi,true_trig=true_trig)
+                # print(f'loss_TI: {loss_TI}')
 
-                print(f'size p_tj: {p_tj.size()}')
-                print(p_tj)
-                print(f'len true_label: {len(true_label)}')
-                print(true_label)
-                loss_TP = compute_loss_TP(p_tj=p_tj,true_label=true_label)
-                print(f'loss TP: {loss_TP}')
-                last_hidden_state = return_dict['last_hidden_state']
-                print(f'size of last_hidden_state: {last_hidden_state}')
-                print(last_hidden_state)
+                # print(f'size p_tj: {p_tj.size()}')
+                # print(p_tj)
+                # print(f'len true_label: {len(true_label)}')
+                # print(true_label)
+                # loss_TP = compute_loss_TP(p_tj=p_tj,true_label=true_label)
+                # print(f'loss TP: {loss_TP}')
+                # last_hidden_state = return_dict['last_hidden_state']
+                # print(f'size of last_hidden_state: {last_hidden_state}')
+                # print(last_hidden_state)
 
 
                 # D_W_P = F.softmax(p_wi, dim=1)
                 # D_T_P = F.softmax(p_tj, dim=1)
                 # pi_star = compute_optimal_transport(D_W_P, D_T_P, C, epsilon=epsilon)
 
-        #         for i in range(len(train_y)):
-        #             invalid_mask_label = torch.BoolTensor([item not in learned_types for item in train_y[i]]).to(device)
-        #             train_y[i].masked_fill_(invalid_mask_label, 0)
+                for i in range(len(train_y)):
+                    invalid_mask_label = torch.BoolTensor([item not in learned_types for item in train_y[i]]).to(device)
+                    train_y[i].masked_fill_(invalid_mask_label, 0)
+                
+                print('mask_label: ')
+                print(invalid_mask_label)
+                print(train_y)
         #         loss, loss_ucl, loss_aug, loss_fd, loss_pd, loss_tlcl = 0, 0, 0, 0, 0, 0
         #         ce_y = torch.cat(train_y)
         #         ce_outputs = outputs
