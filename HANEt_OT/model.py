@@ -116,6 +116,8 @@ class BertED(nn.Module):
         return_dict['last_hidden_state'] = x
 
         return return_dict
+    def get_label_embeddings(self):
+        return self.label_embeddings.weight.transpose(0,1)
 
     def forward_backbone(self, x, masks):
         x = self.backbone(x, attention_mask=masks)

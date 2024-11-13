@@ -32,7 +32,7 @@ def compute_loss_TP(p_tj, true_label):
 
 
 
-def compute_optimal_transport(p, q, C, epsilon=1e-8):
+def compute_optimal_transport(p, q, C, epsilon=1e-3):
     batch_size, n, m = C.size()
     pi_star = []
 
