@@ -41,6 +41,7 @@ def compute_loss_TP(p_tj, true_label):
 
 
 def compute_loss_task(pi_star, pi_golden):
-    pi_xi_li = pi_star * pi_golden
-    loss_Task = -torch.log((torch.sum(pi_xi_li,dim=-1))).mean()
-    return loss_Task
+    log_probs = torch.sum(pi_star * pi_golden, dim=-1)
+    log_probs = torch.log(log_probs + 1e-10)
+    loss_task = -log_probs.mean()
+    return loss_task
