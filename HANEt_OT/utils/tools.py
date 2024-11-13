@@ -2,6 +2,8 @@ import json, os
 import torch
 from configs import parse_arguments
 import itertools
+import ot
+import numpy as np
 
 args = parse_arguments()
 device = torch.device(args.device if torch.cuda.is_available() and args.device != "cpu" else "cpu")  # type: ignore
@@ -119,4 +121,22 @@ def true_label_and_trigger(train_x,train_y,train_masks, train_span, class_num):
     pi_golden_matrix = torch.stack([x.to(device) for x in golden_matrix])
     return true_one_hot_trigger_vectors, true_one_hot_label_vectors, pi_golden_matrix
 
-        
+
+def compute_optimal_transport(p, q, C, epsilon=1e-3):
+    batch_size, n, m = C.size()
+    pi_star = []
+
+    for i in range(batch_size):
+        p_i = p[i].detach().cpu().numpy()
+        q_i = q[i].detach().cpu().numpy()
+        C_i = C[i].detach().cpu().numpy()
+
+        pi_i = ot.sinkhorn(p_i, q_i, C_i, reg=epsilon)
+        pi_star.append(pi_i)
+
+    pi_star = np.stack(pi_star, axis=0)
+    pi_star = torch.tensor(pi_star, dtype=torch.float, device=C.device)
+
+    return pi_star
+
+      
