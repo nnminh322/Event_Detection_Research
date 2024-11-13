@@ -298,7 +298,7 @@ def train(local_rank, args):
                 # print('mask_label: ')
                 # print(invalid_mask_label)
                 # print(train_y)
-                true_trig, true_label = true_label_and_trigger(
+                true_trig, true_label, pi_g = true_label_and_trigger(
                     train_x=train_x,
                     train_y=train_y,
                     train_masks=train_masks,
@@ -329,15 +329,17 @@ def train(local_rank, args):
                 E_exp = E.unsqueeze(2)
                 T_exp = T.unsqueeze(0).unsqueeze(0)
                 C = torch.norm(E_exp - T_exp, p=2, dim=-1)
-                print(C.size())
+                # print(f'C size: {C.size()}')
                 pi_star = compute_optimal_transport(D_W_P, D_T_P, C)
-                print(pi_star.size())
-                print(true_label.size())
-                # # Tính L_task: Negative Log-Likelihood Loss
-                # pi_star_golden = pi_star.gather(2, true_label.unsqueeze(2)).squeeze(2)
-                # L_task = F.binary_cross_entropy(pi_star_golden, reduction="mean")
-
-                # pi_g = F.one_hot(true_label, num_classes=model.num_labels).float()
+                print(f'pi star size: {pi_star.size()}')
+                print(f'pi_g: {pi_g.size()}')
+                # print(f'true_label size: {true_label.size()}')
+                # Tính L_task: Negative Log-Likelihood Loss
+                # pi_star_golden = pi_star.gather(2, true_label.unsqueeze(2).long()).squeeze(2)
+                # L_task = F.binary_cross_entropy(
+                #     pi_star_golden, (true_label >= 0).float(), reduction="mean"
+                # )
+                # # print(f'loss l_task: {L_task}')
                 # Dist_pi_star = (pi_star * C).sum(dim=[1, 2])
                 # Dist_pi_g = (pi_g * C).sum(dim=[1, 2])
                 # L_OT = torch.abs(Dist_pi_star - Dist_pi_g).mean()

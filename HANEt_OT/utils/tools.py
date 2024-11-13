@@ -66,11 +66,13 @@ def get_one_hot_true_label_and_true_trigger(data_instance, num_label):
     true_label = []
     true_trigger = []
     seq_len = len(data_instance["piece_ids"]) # because start_index of piece_ids is 1 instead of 0
-    
+    matrix_word_is_label = torch.zeros(seq_len, num_label,dtype=int)
     for i in range(len(data_instance["label"])):
         if data_instance["label"][i] != 0:
             true_label.append(data_instance["label"][i])
             true_trigger.append(data_instance["span"][i])
+            for word_is_trigger in data_instance['span'][i]:
+                matrix_word_is_label[word_is_trigger,data_instance['label'][i]] = 1
 
 
     true_one_hot_label_vector = torch.zeros(num_label)
@@ -92,13 +94,14 @@ def get_one_hot_true_label_and_true_trigger(data_instance, num_label):
         true_one_hot_trigger_vector += torch.eye(seq_len)[i]
     true_one_hot_trigger_vector = true_one_hot_trigger_vector.to(device)
     true_one_hot_label_vector = true_one_hot_label_vector.to(device)
-    return true_one_hot_trigger_vector, true_one_hot_label_vector
+    return true_one_hot_trigger_vector, true_one_hot_label_vector, matrix_word_is_label
 
 
 def true_label_and_trigger(train_x,train_y,train_masks, train_span, class_num):
     num_instance = len(train_x)
     true_one_hot_label_vectors = []
     true_one_hot_trigger_vectors = []
+    golden_matrix = []
     for i in range(num_instance):
         data_instace={
             'piece_ids': train_x[i],
@@ -107,11 +110,13 @@ def true_label_and_trigger(train_x,train_y,train_masks, train_span, class_num):
             'mask': train_masks[i]
         }
 
-        true_one_hot_trigger_vector, true_one_hot_label_vector = get_one_hot_true_label_and_true_trigger(data_instance=data_instace,num_label=class_num)
+        true_one_hot_trigger_vector, true_one_hot_label_vector, matrix_word_is_label= get_one_hot_true_label_and_true_trigger(data_instance=data_instace,num_label=class_num)
         true_one_hot_trigger_vectors.append(true_one_hot_trigger_vector)
         true_one_hot_label_vectors.append(true_one_hot_label_vector)
-    true_one_hot_trigger_vectors = [x.to(device) for x in true_one_hot_trigger_vectors]
-    true_one_hot_label_vectors = [x.to(device) for x in true_one_hot_label_vectors]
-    return true_one_hot_trigger_vectors, true_one_hot_label_vectors
+        golden_matrix.append(matrix_word_is_label)
+    true_one_hot_trigger_vectors = torch.stack([x.to(device) for x in true_one_hot_trigger_vectors])
+    true_one_hot_label_vectors = torch.stack([x.to(device) for x in true_one_hot_label_vectors])
+    pi_golden_matrix = torch.stack([x.to(device) for x in golden_matrix])
+    return true_one_hot_trigger_vectors, true_one_hot_label_vectors, pi_golden_matrix
 
         
