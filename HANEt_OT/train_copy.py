@@ -634,6 +634,11 @@ def train(local_rank, args):
                         print(f'size of eval_x {eval_y.size()}')
                         print(f'size of eval_x {eval_span.size()}')
                         print(f'size of eval_x {eval_masks.size()}')
+
+                        eval_p_wi = eval_return_dict['p_wi']
+                        eval_p_tj = eval_return_dict['p_tj']
+                        eval_last_hidden_state = eval_return_dict['last_hidden_state']
+                        eval_e_cls = eval_return_dict['e_cls']
         #                 eval_outputs = eval_return_dict["outputs"]
         #                 valid_mask_eval_op = torch.BoolTensor(
         #                     [idx in learned_types for idx in range(args.class_num + 1)]
