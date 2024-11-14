@@ -620,6 +620,7 @@ def train(local_rank, args):
                         collate_fn=lambda x: x,
                     )
                     calcs = Calculator()
+                    print('eval----------------------------')
                     for batch in tqdm(eval_loader):
                         eval_x, eval_y, eval_masks, eval_span = zip(*batch)
                         eval_x = torch.LongTensor(eval_x).to(device)
@@ -630,15 +631,31 @@ def train(local_rank, args):
                         ]
                         eval_return_dict = model(eval_x, eval_masks, eval_span)
 
-                        print(f'size of eval_x {eval_x.sizer()}')
-                        print(f'size of eval_x {eval_y.size()}')
-                        print(f'size of eval_x {eval_span.size()}')
-                        print(f'size of eval_x {eval_masks.size()}')
+                        # print(f'len of eval_x {len(eval_x)}')
+                        # print(f'len of eval_y {len(eval_y)}')
+                        # print(f'len of eval_span {len(eval_span)}')
+                        # print(f'len of eval_masks {len(eval_masks)}')
 
                         eval_p_wi = eval_return_dict['p_wi']
                         eval_p_tj = eval_return_dict['p_tj']
                         eval_last_hidden_state = eval_return_dict['last_hidden_state']
                         eval_e_cls = eval_return_dict['e_cls']
+
+                        print(f'size of eval_p_wi: {eval_p_wi.size()}')
+                        print(f'size of eval_p_tj: {eval_p_tj.size()}')
+                        print(f'size of eval_last_hidden_state: {eval_last_hidden_state.size()}')
+                        print(f'size of eval_e_cls: {eval_e_cls.size()}')
+                        eval_D_W_P = F.softmax(eval_p_wi, dim=1)
+                        eval_D_T_P = F.softmax(eval_p_tj, dim=1)
+                        eval_E = eval_last_hidden_state
+                        eval_T = model.get_label_embeddings()
+                        eval_E_exp = eval_E.unsqueeze(2)
+                        eval_T_exp = eval_T.unsqueeze(0).unsqueeze(0)
+                        eval_C = torch.norm(eval_E_exp - eval_T_exp, p=2, dim=-1)
+                        # print(f'C size: {C.size()}')
+                        eval_pi_star = compute_optimal_transport(eval_D_W_P, eval_D_T_P, eval_C) 
+                        print(f'size of eval_pi_star: {eval_pi_star.size()}')  
+                        print(f'argmax eval_pi_star: {torch.argmax(eval_pi_star,dim=-1)}')             
         #                 eval_outputs = eval_return_dict["outputs"]
         #                 valid_mask_eval_op = torch.BoolTensor(
         #                     [idx in learned_types for idx in range(args.class_num + 1)]
