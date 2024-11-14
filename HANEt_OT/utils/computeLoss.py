@@ -23,7 +23,7 @@ def compute_CLLoss(Adj_mask, reprs, matsize):  # compute InfoNCELoss
 def compute_loss_TI(p_wi, true_trig):
     loss_TI = 0.0
     for i in range(len(true_trig)):
-        loss_TI += -torch.dot(true_trig[i], torch.log(p_wi[i])) + torch.dot(
+        loss_TI += -torch.dot(true_trig[i], torch.log(p_wi[i])) - torch.dot(
             (1 - true_trig[i]), torch.log(1 - p_wi[i])
         )
 
@@ -33,7 +33,7 @@ def compute_loss_TI(p_wi, true_trig):
 def compute_loss_TP(p_tj, true_label):
     loss_TP = 0.0
     for i in range(len(true_label)):
-        loss_TP += -torch.dot(true_label[i], torch.log(p_tj[i])) + torch.dot(
+        loss_TP += -torch.dot(true_label[i], torch.log(p_tj[i])) - torch.dot(
             (1 - true_label[i]), torch.log(1 - p_tj[i])
         )
 

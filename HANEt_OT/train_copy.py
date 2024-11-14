@@ -243,6 +243,8 @@ def train(local_rank, args):
         logger.info(f"Previous learned types: {prev_learned_types}")
         dev_score = None
         no_better = 0
+        for param in model.parameters():
+            print(f'param: {param}')
         for ep in range(args.epochs):
             if stage == 0 and args.skip_first:
                 continue
