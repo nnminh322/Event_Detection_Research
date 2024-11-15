@@ -129,7 +129,7 @@ def true_label_and_trigger(train_x, train_y, train_masks, train_span, class_num)
     return true_one_hot_trigger_vectors, true_one_hot_label_vectors, pi_golden_matrix
 
 
-def compute_optimal_transport(p, q, C, epsilon=1e-3):
+def compute_optimal_transport(p, q, C, masks, epsilon=1e-3):
     batch_size, n, m = C.size()
     pi_star = []
 
@@ -144,5 +144,5 @@ def compute_optimal_transport(p, q, C, epsilon=1e-3):
     pi_star = np.stack(pi_star, axis=0)
     pi_star = torch.tensor(pi_star, dtype=torch.float, device=C.device)
 
-    return pi_star
+    return pi_star * masks
 
