@@ -302,27 +302,27 @@ def train(local_rank, args):
                 # print('mask_label: ')
                 # print(invalid_mask_label)
                 # print(train_y)
-                # true_trig, true_label, pi_g = true_label_and_trigger(
-                #     train_x=train_x,
-                #     train_y=train_y,
-                #     train_masks=train_masks,
-                #     train_span=train_span,
-                #     class_num=args.class_num + 1,
-                # )
+                true_trig, true_label, pi_g = true_label_and_trigger(
+                    train_x=train_x,
+                    train_y=train_y,
+                    train_masks=train_masks,
+                    train_span=train_span,
+                    class_num=args.class_num + 1,
+                )
 
-                # p_wi = return_dict["p_wi"]
-                # p_tj = return_dict["p_tj"]
-                # D_W_P = F.softmax(p_wi, dim=1)
-                # D_T_P = F.softmax(p_tj, dim=1)
-                # loss_TI = compute_loss_TI(p_wi=p_wi, true_trig=true_trig)
-                # print(f'loss_TI: {loss_TI}')
+                p_wi = return_dict["p_wi"]
+                p_tj = return_dict["p_tj"]
+                D_W_P = F.softmax(p_wi.masked_fill(train_masks.unsqueeze(-1)==1, float('-inf')), dim=1)
+                D_T_P = F.softmax(p_tj, dim=1)
+                loss_TI = compute_loss_TI(p_wi=p_wi, true_trig=true_trig,masks=train_masks)
+                print(f'loss_TI: {loss_TI}')
 
                 # print(f'size p_tj: {p_tj.size()}')
                 # print(p_tj)
                 # print(f'len true_label: {len(true_label)}')
                 # print(true_label)
-                # loss_TP = compute_loss_TP(p_tj=p_tj, true_label=true_label)
-                # print(f'loss TP: {loss_TP}')
+                loss_TP = compute_loss_TP(p_tj=p_tj, true_label=true_label)
+                print(f'loss TP: {loss_TP}')
                 # last_hidden_state = return_dict['last_hidden_state']
                 # print(f'size of last_hidden_state: {last_hidden_state}')
                 # print(last_hidden_state)

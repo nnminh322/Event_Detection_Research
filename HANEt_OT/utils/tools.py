@@ -146,11 +146,3 @@ def compute_optimal_transport(p, q, C, epsilon=1e-3):
 
     return pi_star
 
-
-def get_true_hidden_state_without_padding(last_hidden_state, masks):
-    masks = masks.unsqueeze(-1)
-    mask_hidden_state = last_hidden_state * masks
-    true_hidden_state_without_padding = mask_hidden_state.view(-1, 768)[
-        masks.view(-1) == 1
-    ]
-    return true_hidden_state_without_padding  # [sum_true_token, hidden_dim]
