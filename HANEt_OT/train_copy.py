@@ -641,10 +641,10 @@ def train(local_rank, args):
                         eval_last_hidden_state = eval_return_dict['last_hidden_state']
                         eval_e_cls = eval_return_dict['e_cls']
 
-                        print(f'size of eval_p_wi: {eval_p_wi.size()}')
-                        print(f'size of eval_p_tj: {eval_p_tj.size()}')
-                        print(f'size of eval_last_hidden_state: {eval_last_hidden_state.size()}')
-                        print(f'size of eval_e_cls: {eval_e_cls.size()}')
+                        # print(f'size of eval_p_wi: {eval_p_wi.size()}')
+                        # print(f'size of eval_p_tj: {eval_p_tj.size()}')
+                        # print(f'size of eval_last_hidden_state: {eval_last_hidden_state.size()}')
+                        # print(f'size of eval_e_cls: {eval_e_cls.size()}')
                         eval_D_W_P = F.softmax(eval_p_wi, dim=1)
                         eval_D_T_P = F.softmax(eval_p_tj, dim=1)
                         eval_E = eval_last_hidden_state
@@ -654,22 +654,29 @@ def train(local_rank, args):
                         eval_C = torch.norm(eval_E_exp - eval_T_exp, p=2, dim=-1)
                         # print(f'C size: {C.size()}')
                         eval_pi_star = compute_optimal_transport(eval_D_W_P, eval_D_T_P, eval_C) 
-                        print(f'size of eval_pi_star: {eval_pi_star.size()}')  
-                        print(f'argmax eval_pi_star: {torch.argmax(eval_pi_star,dim=-1)}')             
-        #                 eval_outputs = eval_return_dict["outputs"]
-        #                 valid_mask_eval_op = torch.BoolTensor(
-        #                     [idx in learned_types for idx in range(args.class_num + 1)]
-        #                 ).to(device)
-        #                 for i in range(len(eval_y)):
-        #                     invalid_mask_eval_label = torch.BoolTensor(
-        #                         [item not in learned_types for item in eval_y[i]]
-        #                     ).to(device)
-        #                     eval_y[i].masked_fill_(invalid_mask_eval_label, 0)
-        #                 if args.leave_zero:
-        #                     eval_outputs[:, 0] = 0
-        #                 eval_outputs = eval_outputs[:, valid_mask_eval_op].squeeze(-1)
-        #                 calcs.extend(eval_outputs.argmax(-1), torch.cat(eval_y))
-        #             bc, (precision, recall, micro_F1) = calcs.by_class(learned_types)
+                        # print(f'size of eval_pi_star: {eval_pi_star.size()}')  
+                        # print(f'argmax eval_pi_star: {torch.argmax(eval_pi_star,dim=-1)}')             
+                        eval_outputs = eval_return_dict["outputs"]
+                        valid_mask_eval_op = torch.BoolTensor(
+                            [idx in learned_types for idx in range(args.class_num + 1)]
+                        ).to(device)
+                        for i in range(len(eval_y)):
+                            invalid_mask_eval_label = torch.BoolTensor(
+                                [item not in learned_types for item in eval_y[i]]
+                            ).to(device)
+                            eval_y[i].masked_fill_(invalid_mask_eval_label, 0)
+                        if args.leave_zero:
+                            eval_outputs[:, 0] = 0
+                        print(f'eval_outputs len: {len(eval_outputs)}')
+                        print(f'eval_outputs: {(eval_outputs)}')
+                        
+                        eval_outputs = eval_outputs[:, valid_mask_eval_op].squeeze(-1)
+                        print(f'eval_outputs len: {len(eval_outputs)}')
+                        print(f'eval_outputs_0 len: {len(eval_outputs[0])}')
+
+                        print(f'eval_outputs: {(eval_outputs)}')
+                        calcs.extend(eval_outputs.argmax(-1), torch.cat(eval_y))
+                    # bc, (precision, recall, micro_F1) = calcs.by_class(learned_types)
         #             if args.log:
         #                 writer.add_scalar(
         #                     f"score/epoch/marco_F1",
