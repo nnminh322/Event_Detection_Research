@@ -302,57 +302,57 @@ def train(local_rank, args):
                 # print('mask_label: ')
                 # print(invalid_mask_label)
                 # print(train_y)
-                true_trig, true_label, pi_g = true_label_and_trigger(
-                    train_x=train_x,
-                    train_y=train_y,
-                    train_masks=train_masks,
-                    train_span=train_span,
-                    class_num=args.class_num + 1,
-                )
+                # true_trig, true_label, pi_g = true_label_and_trigger(
+                #     train_x=train_x,
+                #     train_y=train_y,
+                #     train_masks=train_masks,
+                #     train_span=train_span,
+                #     class_num=args.class_num + 1,
+                # )
 
-                p_wi = return_dict["p_wi"]
-                p_tj = return_dict["p_tj"]
-                D_W_P = F.softmax(p_wi, dim=1)
-                D_T_P = F.softmax(p_tj, dim=1)
-                loss_TI = compute_loss_TI(p_wi=p_wi, true_trig=true_trig)
+                # p_wi = return_dict["p_wi"]
+                # p_tj = return_dict["p_tj"]
+                # D_W_P = F.softmax(p_wi, dim=1)
+                # D_T_P = F.softmax(p_tj, dim=1)
+                # loss_TI = compute_loss_TI(p_wi=p_wi, true_trig=true_trig)
                 # print(f'loss_TI: {loss_TI}')
 
                 # print(f'size p_tj: {p_tj.size()}')
                 # print(p_tj)
                 # print(f'len true_label: {len(true_label)}')
                 # print(true_label)
-                loss_TP = compute_loss_TP(p_tj=p_tj, true_label=true_label)
+                # loss_TP = compute_loss_TP(p_tj=p_tj, true_label=true_label)
                 # print(f'loss TP: {loss_TP}')
                 # last_hidden_state = return_dict['last_hidden_state']
                 # print(f'size of last_hidden_state: {last_hidden_state}')
                 # print(last_hidden_state)
 
-                last_hidden_state = return_dict["last_hidden_state"]
-                E = last_hidden_state
-                T = model.get_label_embeddings()
-                E_exp = E.unsqueeze(2)
-                T_exp = T.unsqueeze(0).unsqueeze(0)
-                C = torch.norm(E_exp - T_exp, p=2, dim=-1)
-                # print(f'C size: {C.size()}')
-                pi_star = compute_optimal_transport(D_W_P, D_T_P, C)
+                # last_hidden_state = return_dict["last_hidden_state"]
+                # E = last_hidden_state
+                # T = model.get_label_embeddings()
+                # E_exp = E.unsqueeze(2)
+                # T_exp = T.unsqueeze(0).unsqueeze(0)
+                # C = torch.norm(E_exp - T_exp, p=2, dim=-1)
+                # # print(f'C size: {C.size()}')
+                # pi_star = compute_optimal_transport(D_W_P, D_T_P, C)
 
-                L_task = compute_loss_task(pi_star=pi_star, pi_golden=pi_g)
-                # print(f'true_label size: {true_label.size()}')
-                # Tính L_task: Negative Log-Likelihood Loss
+                # L_task = compute_loss_task(pi_star=pi_star, pi_golden=pi_g)
+                # # print(f'true_label size: {true_label.size()}')
+                # # Tính L_task: Negative Log-Likelihood Loss
 
-                Dist_pi_star = (pi_star * C).sum(dim=[1, 2])
-                Dist_pi_g = (pi_g * C).sum(dim=[1, 2])
-                L_OT = torch.abs(Dist_pi_star - Dist_pi_g).mean()
-                alpha_task = 1.0
-                alpha_OT = 0.01
-                alpha_LT_I = 0.05
-                alpha_LT_P = 0.01
-                loss_ot = (
-                    alpha_task * L_task
-                    + alpha_OT * L_OT
-                    + alpha_LT_I * loss_TI
-                    + alpha_LT_P * loss_TP
-                )
+                # Dist_pi_star = (pi_star * C).sum(dim=[1, 2])
+                # Dist_pi_g = (pi_g * C).sum(dim=[1, 2])
+                # L_OT = torch.abs(Dist_pi_star - Dist_pi_g).mean()
+                # alpha_task = 1.0
+                # alpha_OT = 0.01
+                # alpha_LT_I = 0.05
+                # alpha_LT_P = 0.01
+                # loss_ot = (
+                #     alpha_task * L_task
+                #     + alpha_OT * L_OT
+                #     + alpha_LT_I * loss_TI
+                #     + alpha_LT_P * loss_TP
+                # )
 
                 # print(f"task {L_task}")
                 # print(f"OT: {L_OT}")
