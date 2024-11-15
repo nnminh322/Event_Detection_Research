@@ -137,6 +137,9 @@ def compute_optimal_transport(p, q, C, masks, epsilon=1e-3):
         p_i = p[i].detach().cpu().numpy()
         q_i = q[i].detach().cpu().numpy()
         C_i = C[i].detach().cpu().numpy()
+        mask_i = masks[i].detach().cpu().numpy()
+
+        C_i = C_i * mask_i[:,None]
 
         pi_i = ot.sinkhorn(p_i, q_i, C_i, reg=epsilon)
         pi_star.append(pi_i)
@@ -144,5 +147,4 @@ def compute_optimal_transport(p, q, C, masks, epsilon=1e-3):
     pi_star = np.stack(pi_star, axis=0)
     pi_star = torch.tensor(pi_star, dtype=torch.float, device=C.device)
 
-    return pi_star * masks
-
+    return pi_star 
