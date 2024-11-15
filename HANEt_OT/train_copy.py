@@ -312,8 +312,8 @@ def train(local_rank, args):
 
                 p_wi = return_dict["p_wi"]
                 p_tj = return_dict["p_tj"]
-                print(f"size p_wi: {p_wi.size()}")
-                print(f"size train_masks: {train_masks.size()}")
+                # print(f"size p_wi: {p_wi.size()}")
+                # print(f"size train_masks: {train_masks.size()}")
 
                 D_W_P = F.softmax(
                     p_wi.masked_fill(train_masks == 0, float("-inf")), dim=1
@@ -322,14 +322,14 @@ def train(local_rank, args):
                 loss_TI = compute_loss_TI(
                     p_wi=p_wi, true_trig=true_trig, masks=train_masks
                 )
-                print(f"loss_TI: {loss_TI}")
+                # print(f"loss_TI: {loss_TI}")
 
                 # print(f'size p_tj: {p_tj.size()}')
                 # print(p_tj)
                 # print(f'len true_label: {len(true_label)}')
                 # print(true_label)
                 loss_TP = compute_loss_TP(p_tj=p_tj, true_label=true_label)
-                print(f"loss TP: {loss_TP}")
+                # print(f"loss TP: {loss_TP}")
                 last_hidden_state = return_dict['last_hidden_state']
                 # print(f'size of last_hidden_state: {last_hidden_state}')
                 # print(last_hidden_state)
@@ -342,7 +342,7 @@ def train(local_rank, args):
                 C = torch.norm(E_exp - T_exp, p=2, dim=-1)
                 # print(f'C size: {C.size()}')
                 pi_star = compute_optimal_transport(D_W_P, D_T_P, C,train_masks)
-                print(f'size of pi_star: {pi_star.size()}')
+                # print(f'size of pi_star: {pi_star.size()}')
 
                 L_task = compute_loss_task(pi_star=pi_star, pi_golden=pi_g)
                 # print(f'true_label size: {true_label.size()}')
@@ -362,11 +362,11 @@ def train(local_rank, args):
                     + alpha_LT_P * loss_TP
                 )
 
-                print(f"task {L_task}")
-                print(f"OT: {L_OT}")
-                print(f"TI {loss_TI}")
-                print(f"TP {loss_TP}")
-                print(f"loss_ot {loss_ot}")
+                # print(f"task {L_task}")
+                # print(f"OT: {L_OT}")
+                # print(f"TI {loss_TI}")
+                # print(f"TP {loss_TP}")
+                # print(f"loss_ot {loss_ot}")
 
                 loss, loss_ucl, loss_aug, loss_fd, loss_pd, loss_tlcl = 0, 0, 0, 0, 0, 0
                 # ce_y = torch.cat(train_y)
@@ -666,7 +666,7 @@ def train(local_rank, args):
                     eval_C = torch.norm(eval_E_exp - eval_T_exp, p=2, dim=-1)
                     # print(f'C size: {C.size()}')
                     eval_pi_star = compute_optimal_transport(eval_D_W_P, eval_D_T_P, eval_C,masks=eval_masks)
-                    print(f'size of eval_pi_star: {eval_pi_star.size()}')
+                    # print(f'size of eval_pi_star: {eval_pi_star.size()}')
                     # print(f'argmax eval_pi_star: {torch.argmax(eval_pi_star,dim=-1)}')
                     # eval_outputs = eval_return_dict["outputs"]
                     valid_mask_eval_op = torch.BoolTensor(
