@@ -216,6 +216,8 @@ def train(local_rank, args):
                 loss, loss_ucl, loss_aug, loss_fd, loss_pd, loss_tlcl = 0, 0, 0, 0, 0, 0
                 ce_y = torch.cat(train_y)
                 ce_outputs = outputs
+                print(f'size of ce_y: {ce_y.size()}')
+                print(f'size of ce_outputs: {ce_outputs.size()}')
                 if (args.ucl or args.tlcl) and (stage > 0 or (args.skip_first_cl != "ucl+tlcl" and stage == 0)):                        
                     # _, dpo_feature2 = model(train_x.clone(), train_masks, padded_train_span, span_len)
                     # scl_idx = torch.cat(train_y).nonzero().squeeze(-1)

@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from configs import parse_arguments
 from torch.nn.utils.rnn import unpad_sequence
 from random import shuffle
+from utils.tools import get_true_hidden_state_without_padding
 
 args = parse_arguments()
 device = torch.device(args.device if torch.cuda.is_available() and args.device != "cpu" else "cpu")  # type: ignore
@@ -88,7 +89,7 @@ class BertED(nn.Module):
             return_dict["outputs_aug"] = outputs_aug
 
         # Trigger Identification
-        last_hidden_state = backbone_output.last_hidden_state
+        last_hidden_state = get_true_hidden_state_without_padding(backbone_output.last_hidden_state,masks=masks)
         p_wi = torch.sigmoid(self.trigger_ffn(last_hidden_state)).squeeze(-1)
 
         label_embeddings = self.label_embeddings.weight.transpose(
@@ -107,8 +108,8 @@ class BertED(nn.Module):
         )  # Concat in last size dimention
 
         p_tj = torch.sigmoid(self.type_ffn(concat)).squeeze(-1)
-        # print(f"size p_wi: {p_wi.size()}")
-        # print(f"size p_tj: {p_tj.size()}")
+        print(f"size p_wi: {p_wi.size()}")
+        print(f"size p_tj: {p_tj.size()}") 
 
         return_dict["p_wi"] = p_wi
         return_dict["p_tj"] = p_tj

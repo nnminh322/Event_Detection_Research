@@ -354,11 +354,11 @@ def train(local_rank, args):
                     + alpha_LT_P * loss_TP
                 )
 
-                print(f"task {L_task}")
-                print(f"OT: {L_OT}")
-                print(f"TI {loss_TI}")
-                print(f"TP {loss_TP}")
-                print(f"loss_ot {loss_ot}")
+                # print(f"task {L_task}")
+                # print(f"OT: {L_OT}")
+                # print(f"TI {loss_TI}")
+                # print(f"TP {loss_TP}")
+                # print(f"loss_ot {loss_ot}")
 
         #         loss, loss_ucl, loss_aug, loss_fd, loss_pd, loss_tlcl = 0, 0, 0, 0, 0, 0
         #         # ce_y = torch.cat(train_y)
@@ -588,94 +588,113 @@ def train(local_rank, args):
         #     logger.info(f"loss_pd: {loss_pd}")
         #     logger.info(f"loss_all: {loss}")
 
-            if ((ep + 1) % args.eval_freq == 0 and args.early_stop) or (
-                ep + 1
-            ) == args.epochs:  # TODO TODO
-                # Evaluation process
-                logger.info("Evaluation process")
-                model.eval()
-                with torch.no_grad():
-                    if args.single_label:
-                        eval_dataset = collect_eval_sldataset(
-                            args.dataset,
-                            args.data_root,
-                            "test",
-                            label2idx,
-                            None,
-                            [i for item in streams for i in item],
-                        )
-                    else:
-                        eval_dataset = collect_dataset(
-                            args.dataset,
-                            args.data_root,
-                            "test",
-                            label2idx,
-                            None,
-                            [i for item in streams for i in item],
-                        )
-                    eval_loader = DataLoader(
-                        dataset=eval_dataset,
-                        shuffle=False,
-                        batch_size=4,
-                        collate_fn=lambda x: x,
-                    )
-                    calcs = Calculator()
-                    print('eval----------------------------')
-                    for batch in tqdm(eval_loader):
-                        eval_x, eval_y, eval_masks, eval_span = zip(*batch)
-                        eval_x = torch.LongTensor(eval_x).to(device)
-                        eval_masks = torch.LongTensor(eval_masks).to(device)
-                        eval_y = [torch.LongTensor(item).to(device) for item in eval_y]
-                        eval_span = [
-                            torch.LongTensor(item).to(device) for item in eval_span
-                        ]
-                        eval_return_dict = model(eval_x, eval_masks, eval_span)
+            # if ((ep + 1) % args.eval_freq == 0 and args.early_stop) or (
+            #     ep + 1
+            # ) == args.epochs:  # TODO TODO
+            #     # Evaluation process
+            #     logger.info("Evaluation process")
+            #     model.eval()
+            #     with torch.no_grad():
+            #         if args.single_label:
+            #             eval_dataset = collect_eval_sldataset(
+            #                 args.dataset,
+            #                 args.data_root,
+            #                 "test",
+            #                 label2idx,
+            #                 None,
+            #                 [i for item in streams for i in item],
+            #             )
+            #         else:
+            #             eval_dataset = collect_dataset(
+            #                 args.dataset,
+            #                 args.data_root,
+            #                 "test",
+            #                 label2idx,
+            #                 None,
+            #                 [i for item in streams for i in item],
+            #             )
+            #         eval_loader = DataLoader(
+            #             dataset=eval_dataset,
+            #             shuffle=False,
+            #             batch_size=4,
+            #             collate_fn=lambda x: x,
+            #         )
+            #         calcs = Calculator()
+            #         print('eval----------------------------')
+            #         for batch in tqdm(eval_loader):
+            #             eval_x, eval_y, eval_masks, eval_span = zip(*batch)
+            #             eval_x = torch.LongTensor(eval_x).to(device)
+            #             eval_masks = torch.LongTensor(eval_masks).to(device)
+            #             eval_y = [torch.LongTensor(item).to(device) for item in eval_y]
+            #             eval_span = [
+            #                 torch.LongTensor(item).to(device) for item in eval_span
+            #             ]
+            #             eval_return_dict = model(eval_x, eval_masks, eval_span)
 
-                        # print(f'len of eval_x {len(eval_x)}')
-                        # print(f'len of eval_y {len(eval_y)}')
-                        # print(f'len of eval_span {len(eval_span)}')
-                        # print(f'len of eval_masks {len(eval_masks)}')
+            #             # print(f'len of eval_x {len(eval_x)}')
+            #             # print(f'len of eval_y {len(eval_y)}')
+            #             # print(f'len of eval_span {len(eval_span)}')
+            #             # print(f'len of eval_masks {len(eval_masks)}')
+            #             # print(f'size of eval_x {eval_x.size()}')
+            #             # print(f'size of eval_y {eval_y.size()}')
+            #             # print(f'size of eval_span {eval_span.size()}')
+            #             # print(f'size of eval_masks {eval_masks.size()}')
 
-                        eval_p_wi = eval_return_dict['p_wi']
-                        eval_p_tj = eval_return_dict['p_tj']
-                        eval_last_hidden_state = eval_return_dict['last_hidden_state']
-                        eval_e_cls = eval_return_dict['e_cls']
 
-                        # print(f'size of eval_p_wi: {eval_p_wi.size()}')
-                        # print(f'size of eval_p_tj: {eval_p_tj.size()}')
-                        # print(f'size of eval_last_hidden_state: {eval_last_hidden_state.size()}')
-                        # print(f'size of eval_e_cls: {eval_e_cls.size()}')
-                        eval_D_W_P = F.softmax(eval_p_wi, dim=1)
-                        eval_D_T_P = F.softmax(eval_p_tj, dim=1)
-                        eval_E = eval_last_hidden_state
-                        eval_T = model.get_label_embeddings()
-                        eval_E_exp = eval_E.unsqueeze(2)
-                        eval_T_exp = eval_T.unsqueeze(0).unsqueeze(0)
-                        eval_C = torch.norm(eval_E_exp - eval_T_exp, p=2, dim=-1)
-                        # print(f'C size: {C.size()}')
-                        eval_pi_star = compute_optimal_transport(eval_D_W_P, eval_D_T_P, eval_C) 
-                        # print(f'size of eval_pi_star: {eval_pi_star.size()}')  
-                        # print(f'argmax eval_pi_star: {torch.argmax(eval_pi_star,dim=-1)}')             
-                        eval_outputs = eval_return_dict["outputs"]
-                        valid_mask_eval_op = torch.BoolTensor(
-                            [idx in learned_types for idx in range(args.class_num + 1)]
-                        ).to(device)
-                        for i in range(len(eval_y)):
-                            invalid_mask_eval_label = torch.BoolTensor(
-                                [item not in learned_types for item in eval_y[i]]
-                            ).to(device)
-                            eval_y[i].masked_fill_(invalid_mask_eval_label, 0)
-                        if args.leave_zero:
-                            eval_outputs[:, 0] = 0
-                        print(f'eval_outputs len: {len(eval_outputs)}')
-                        print(f'eval_outputs: {(eval_outputs)}')
+            #             eval_p_wi = eval_return_dict['p_wi']
+            #             eval_p_tj = eval_return_dict['p_tj']
+            #             eval_last_hidden_state = eval_return_dict['last_hidden_state']
+            #             # eval_e_cls = eval_return_dict['e_cls']
+
+            #             # print(f'size of eval_p_wi: {eval_p_wi.size()}')
+            #             # print(f'size of eval_p_tj: {eval_p_tj.size()}')
+            #             # print(f'size of eval_last_hidden_state: {eval_last_hidden_state.size()}')
+            #             # print(f'size of eval_e_cls: {eval_e_cls.size()}')
+            #             eval_D_W_P = F.softmax(eval_p_wi, dim=1)
+            #             eval_D_T_P = F.softmax(eval_p_tj, dim=1)
+            #             eval_E = eval_last_hidden_state
+            #             eval_T = model.get_label_embeddings()
+            #             eval_E_exp = eval_E.unsqueeze(2)
+            #             eval_T_exp = eval_T.unsqueeze(0).unsqueeze(0)
+            #             eval_C = torch.norm(eval_E_exp - eval_T_exp, p=2, dim=-1)
+            #             # print(f'C size: {C.size()}')
+            #             eval_pi_star = compute_optimal_transport(eval_D_W_P, eval_D_T_P, eval_C) 
+            #             print(f'size of eval_pi_star: {eval_pi_star.size()}')  
+            #             # print(f'argmax eval_pi_star: {torch.argmax(eval_pi_star,dim=-1)}')             
+            #             eval_outputs = eval_return_dict["outputs"]
+            #             valid_mask_eval_op = torch.BoolTensor(
+            #                 [idx in learned_types for idx in range(args.class_num + 1)]
+            #             ).to(device)
+            #             for i in range(len(eval_y)):
+            #                 invalid_mask_eval_label = torch.BoolTensor(
+            #                     [item not in learned_types for item in eval_y[i]]
+            #                 ).to(device)
+            #                 eval_y[i].masked_fill_(invalid_mask_eval_label, 0)
                         
-                        eval_outputs = eval_outputs[:, valid_mask_eval_op].squeeze(-1)
-                        print(f'eval_outputs len: {len(eval_outputs)}')
-                        print(f'eval_outputs_0 len: {len(eval_outputs[0])}')
+            #             _, _, eval_pi_g = true_label_and_trigger(
+            #                 train_x=eval_x,
+            #                 train_y=eval_y,
+            #                 train_masks=eval_masks,
+            #                 train_span=eval_span,
+            #                 class_num=args.class_num + 1,
+            #             )
 
-                        print(f'eval_outputs: {(eval_outputs)}')
-                        calcs.extend(eval_outputs.argmax(-1), torch.cat(eval_y))
+            #             # print(f'size of eval_pi_g: {eval_pi_g.size()}')
+            #             # print(f'eval_pi_g[0]: {eval_pi_g[0]}')
+            #             if args.leave_zero:
+            #                 eval_outputs[:, 0] = 0
+                        
+            #             # print(f'eval_outputs len: {len(eval_outputs)}')
+            #             # print(f'eval_outputs: {(eval_outputs)}')
+                        
+            #             # print(f'eval_outputs size: {eval_outputs.size()}')
+            #             # print(valid_mask_eval_op)
+            #             # eval_outputs = eval_outputs[:, valid_mask_eval_op].squeeze(-1)
+            #             print(f'eval_outputs len: {len(eval_outputs)}')
+            #             print(f'eval_outputs size: {eval_outputs.size()}')
+
+                        # print(f'eval_outputs: {(eval_outputs)}')
+                        # calcs.extend(eval_outputs.argmax(-1), torch.cat(eval_y))
                     # bc, (precision, recall, micro_F1) = calcs.by_class(learned_types)
         #             if args.log:
         #                 writer.add_scalar(
