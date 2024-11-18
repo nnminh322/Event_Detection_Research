@@ -91,9 +91,7 @@ class BertED(nn.Module):
         last_hidden_state = backbone_output.last_hidden_state
         p_wi = torch.sigmoid(self.trigger_ffn(last_hidden_state)).squeeze(-1)
 
-        label_embeddings = self.label_embeddings.weight.transpose(
-            0, 1
-        )  # [Num_label, hidden_size]
+        label_embeddings = self.get_label_embeddings()
         label_embeddings = label_embeddings.unsqueeze(0).repeat(
             x.size(0), 1, 1
         )  # [Num_label, hidden_size] -> [Batch_size, Num_label, Hidden_size]
@@ -105,7 +103,7 @@ class BertED(nn.Module):
         concat = torch.cat(
             [label_embeddings, e_cls_repeat_n_class], dim=-1
         )  # Concat in last size dimention
-
+        print(f'size of concat: {concat}')
         p_tj = torch.sigmoid(self.type_ffn(concat)).squeeze(-1)
         # print(f"size p_wi: {p_wi.size()}")
         # print(f"size p_tj: {p_tj.size()}") 
