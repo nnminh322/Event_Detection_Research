@@ -179,10 +179,10 @@ class lm_ot(torch.nn.Module):
             self.verbs = json.load(f)
         self.non_verbs = [i for i in range(vocab_size) if i not in self.verbs]
     
-    def get_element(self, feature, indices):
+    def get_element(self, feature, indices): ## để lấy phần từ featrue (matrix) dọc theo trục indicase (chiều dọc)
         return feature[torch.arange(feature.size(0)).unsqueeze(1), indices.repeat(feature.size(0), 1)]
 
-    def get_m(self, nslots, verbs):
+    def get_m(self, nslots, verbs): ## tính cosine giữa nslots với verbs, 1 - scores cho biết chi phí (cost)
         if opts.llm2vec == False:
             vocab = self.get_element(self.model.predictions.decoder.weight.data.T, verbs).T 
         else:

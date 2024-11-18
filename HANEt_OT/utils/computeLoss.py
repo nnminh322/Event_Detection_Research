@@ -46,3 +46,47 @@ def compute_loss_task(pi_star, pi_golden):
     log_probs = torch.log(log_probs + 1e-10)
     loss_task = -log_probs.mean()
     return loss_task
+
+def sinkhorn_pytorch(M, a, b, lambda_sh, numItermax=1000, stopThr=5e-3):
+    u = torch.ones_like(a) / a.size(0)
+    v = torch.zeros_like(b)
+    K = torch.exp(-M * lambda_sh)
+
+    cpt = 0
+    err = 1.0
+
+    def condition(cpt, u, v, err):
+        return cpt < numItermax and err > stopThr
+
+    def v_update(u, v):
+        v = b / torch.matmul(K.t(), u)
+        u = a / torch.matmul(K, v)
+        return u, v
+
+    def no_v_update(u, v):
+        return u, v
+
+    def err_f1(K, u, v, b):
+        bb = v * torch.matmul(K.t(), u)
+        err = torch.norm(torch.sum(torch.abs(bb - b), dim=0), p=float('inf'))
+        return err
+
+    def err_f2(err):
+        return err
+
+    def loop_func(cpt, u, v, err):
+        u = a / torch.matmul(K, b / torch.matmul(u.T, K).T)
+        cpt = cpt + 1
+        if cpt % 20 == 1 or cpt == numItermax:
+            u, v = v_update(u, v)
+            err = err_f1(K, u, v, b)
+        else:
+            u, v = no_v_update(u, v)
+            err = err_f2(err)
+        return cpt, u, v, err
+
+    while condition(cpt, u, v, err):
+        cpt, u, v, err = loop_func(cpt, u, v, err)
+
+    sinkhorn_divergences = torch.sum(u * torch.matmul(K * M, v), dim=0)
+    return sinkhorn_divergences
