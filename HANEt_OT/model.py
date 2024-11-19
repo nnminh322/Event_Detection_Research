@@ -116,10 +116,10 @@ class BertED(nn.Module):
         return_dict['p_tj'] = p_tj
         return_dict['D_T_P'] = D_T_P
 
-        print('----check-sum-p,q=1------')
-        for i in range(len(D_W_P_order)):
-            print(f'torch.sum(D_W_P_order[{i}]):{torch.sum(D_W_P_order[{i}])}')
-            print(f'torch.sum(D_T_P[{i}]):{torch.sum(D_T_P[{i}])}')
+        # print('----check-sum-p,q=1------')
+        # for i in range(len(D_W_P_order)):
+        #     print(f'torch.sum(D_W_P_order[{i}]):{torch.sum(D_W_P_order[i])}')
+        #     print(f'torch.sum(D_T_P[{i}]):{torch.sum(D_T_P[i])}')
 
 
 

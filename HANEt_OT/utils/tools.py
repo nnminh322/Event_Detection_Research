@@ -129,7 +129,7 @@ def true_label_and_trigger(train_x, train_y, train_masks, train_span, class_num)
     return true_one_hot_trigger_vectors, true_one_hot_label_vectors, pi_golden_matrix
 
 
-def compute_optimal_transport(p, q, C, epsilon=1e-3):
+def compute_single_optimal_transport_for_1_sentence(p, q, C, epsilon=0.05):
     # Đảm bảo các tensor p, q, C đều ở trên cùng một device (CPU hoặc GPU)
     device = p.device
 
@@ -176,11 +176,11 @@ def compute_cost_transport(last_hidden_state_order, label_embeddings, num_classe
         cost_matrix.append(cost)
     return cost_matrix
 
-def compute_optimal_transport_plane(D_W_P_order,D_T_P, cost_matrix):
+def compute_optimal_transport_plane_for_batch(D_W_P_order,D_T_P, cost_matrix):
     batch_size = len(D_W_P_order)
     pi_star_matrix = []
     for sentence in range(batch_size):
-        pi_i = compute_optimal_transport(D_W_P_order[sentence],D_T_P[sentence],cost_matrix[sentence])
+        pi_i = compute_single_optimal_transport_for_1_sentence(D_W_P_order[sentence],D_T_P[sentence],cost_matrix[sentence])
         pi_star_matrix.append(pi_i)
     
     return pi_star_matrix

@@ -41,8 +41,13 @@ def compute_loss_TP(p_tj, true_label):
     return loss_TP / len(true_label)
 
 
-def compute_loss_Task(last_hidden_state_order, label_embeddings,D_W_P_order, D_T_P,):
-    return 0
+def compute_loss_Task(pi_star, y_true):
+    loss_Task = 0.0
+    batch_size = len(pi_star)
+    for i in range(batch_size):
+        sentence_loss = -torch.log(pi_star[i].gather(1,y_true[i].unsqueeze(1))).sum() / len(pi_star[i])
+        loss_Task+=sentence_loss
+    return loss_Task/batch_size
 
 def sinkhorn_pytorch(M, a, b, lambda_sh, numItermax=1000, stopThr=5e-3):
     u = torch.ones_like(a) / a.size(0)
