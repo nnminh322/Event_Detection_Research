@@ -139,7 +139,7 @@ def compute_optimal_transport(p, q, C, masks, epsilon=1e-3):
         C_i = C[i].detach().cpu().numpy()
         mask_i = masks[i].detach().cpu().numpy()
 
-        C_i = C_i * mask_i[:,None]
+        C_i = C_i * mask_i[:, None]
 
         pi_i = ot.sinkhorn(p_i, q_i, C_i, reg=epsilon)
         pi_star.append(pi_i)
@@ -147,12 +147,21 @@ def compute_optimal_transport(p, q, C, masks, epsilon=1e-3):
     pi_star = np.stack(pi_star, axis=0)
     pi_star = torch.tensor(pi_star, dtype=torch.float, device=C.device)
 
-    return pi_star 
+    return pi_star
 
 
-def get_true_y(y,span):
-    true_y = []
+def get_true_y(y, num_classes=args.class_num + 1):
+    true_trig, true_label = [], []
     for i in range(len(y)):
+        true_label_loop = torch.zeros(num_classes)
+        set_label = set(y[i].tolist())
+        for label in set_label:
+            if label != 0:
+                true_label_loop += torch.nn.functional.one_hot(
+                    torch.tensor(label), num_classes=num_classes
+                )
+
         filter_y = (y[i] != 0).int()
-        true_y.append(filter_y)
-    return true_y
+        true_trig.append(filter_y)
+        true_label.append(true_label_loop)
+    return true_trig, true_label

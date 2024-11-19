@@ -20,15 +20,15 @@ def compute_CLLoss(Adj_mask, reprs, matsize):  # compute InfoNCELoss
     return torch.mean(log_prob_cl)
 
 
-def compute_loss_TI(p_wi, true_trig,masks):
+def compute_loss_TI(p_wi, true_y):
     loss_TI = 0.0
-    for i in range(len(true_trig)):
+    for i in range(len(true_y)):
         # mask padding token
-        loss_TI += -torch.dot(true_trig[i][masks[i] == 1], torch.log(p_wi[i][masks[i] == 1])) - torch.dot(
-            (1 - true_trig[i][masks[i] == 1]), torch.log(1 - p_wi[i][masks[i] == 1])
+        loss_TI += -torch.dot(true_y[i].float(), torch.log(p_wi[i])) - torch.dot(
+            (1 - true_y[i].float()), torch.log(1 - p_wi[i])
         )
 
-    return loss_TI / len(true_trig)
+    return loss_TI / len(true_y)
 
 
 def compute_loss_TP(p_tj, true_label):

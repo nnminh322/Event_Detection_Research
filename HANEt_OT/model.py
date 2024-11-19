@@ -77,16 +77,12 @@ class BertED(nn.Module):
                 trig_feature.append(opt)
                 span_to_token = torch.tensor(list(dict.fromkeys(span[i].flatten().tolist()))) # flatten and remove duplicate  
                 trigger_feature = opt
-                print(f'opt size: {opt.size()}')
                 p_wi_follow_order_span = torch.sigmoid(self.trigger_ffn(trigger_feature)).squeeze(1)
-                print(f'p_wi_follow_order_span size: {p_wi_follow_order_span.size()}')
                 D_W_P_follow_order_span = torch.softmax(p_wi_follow_order_span,dim=0)
-                print(f'D_W_P_follow_order_span size: {D_W_P_follow_order_span.size()}')
                 order_of_token_follow_span.append(span_to_token)
                 trigger_feature_order.append(trigger_feature)
                 p_wi_order.append(p_wi_follow_order_span)
                 D_W_P_order.append(D_W_P_follow_order_span)
-                print(f'opt_size: {opt.size()}')
             trig_feature = torch.cat(trig_feature)
         outputs = self.fc(trig_feature)
         return_dict["outputs"] = outputs
