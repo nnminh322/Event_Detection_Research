@@ -26,7 +26,7 @@ class BertED(nn.Module):
         self.labels = labels
         self.fc = nn.Linear(self.input_dim, class_num)
         if self.is_input_mapping:
-            self.map_hidden_dim = 512  # 512 is implemented by the paper
+            self.map_hidden_dim = 768  # 512 is implemented by the paper
             self.map_input_dim = self.input_dim * 2
             self.input_map = nn.Sequential(
                 nn.Linear(self.map_input_dim, self.map_hidden_dim),
@@ -53,18 +53,11 @@ class BertED(nn.Module):
         context_feature = x.view(-1, x.shape[-1])
         e_cls = x[:, 0, :].clone()
         return_dict["reps"] = e_cls  # reps a.k.a e_cls
-        last_hidden_state_order,p_wi_order,D_W_P_order = [],[],[]
+        trigger_feature_order,p_wi_order,D_W_P_order = [],[],[]
         if span != None:
             outputs, trig_feature,order_of_token_follow_span = [], [], []
             for i in range(len(span)):
-                span_to_token = torch.tensor(list(dict.fromkeys(span[i].flatten().tolist()))) # flatten and remove duplicate  
-                last_hidden_state_follow_order_span = torch.tensor(x[i][span_to_token,:])
-                p_wi_follow_order_span = torch.sigmoid(self.trigger_ffn(last_hidden_state_follow_order_span)).squeeze(1)
-                D_W_P_follow_order_span = torch.softmax(p_wi_follow_order_span,dim=0)
-                order_of_token_follow_span.append(span_to_token)
-                last_hidden_state_order.append(last_hidden_state_follow_order_span)
-                p_wi_order.append(p_wi_follow_order_span)
-                D_W_P_order.append(D_W_P_follow_order_span)
+     
                 
                 if self.is_input_mapping:
                     x_cdt = torch.stack(
@@ -82,6 +75,17 @@ class BertED(nn.Module):
                     ) + torch.index_select(x[i], 0, span[i][:, 1])
                     # x = x_cdt.permute(1, 0, 2)
                 trig_feature.append(opt)
+                span_to_token = torch.tensor(list(dict.fromkeys(span[i].flatten().tolist()))) # flatten and remove duplicate  
+                trigger_feature = opt
+                print(f'opt size: {opt.size()}')
+                p_wi_follow_order_span = torch.sigmoid(self.trigger_ffn(trigger_feature)).squeeze(1)
+                print(f'p_wi_follow_order_span size: {p_wi_follow_order_span.size()}')
+                D_W_P_follow_order_span = torch.softmax(p_wi_follow_order_span,dim=0)
+                print(f'D_W_P_follow_order_span size: {D_W_P_follow_order_span.size()}')
+                order_of_token_follow_span.append(span_to_token)
+                trigger_feature_order.append(trigger_feature)
+                p_wi_order.append(p_wi_follow_order_span)
+                D_W_P_order.append(D_W_P_follow_order_span)
                 print(f'opt_size: {opt.size()}')
             trig_feature = torch.cat(trig_feature)
         outputs = self.fc(trig_feature)
@@ -110,7 +114,7 @@ class BertED(nn.Module):
         )  # Concat in last size dimention
         p_tj = torch.sigmoid(self.type_ffn(concat)).squeeze(-1)
         D_T_P = torch.softmax(p_tj,dim=-1)
-        return_dict['last_hidden_state_order'] = last_hidden_state_order
+        return_dict['last_hidden_state_order'] = trigger_feature_order
         return_dict['p_wi_order'] = p_wi_order
         return_dict['D_W_P_order']=D_W_P_order
         return_dict['p_tj'] = p_tj
