@@ -148,3 +148,11 @@ def compute_optimal_transport(p, q, C, masks, epsilon=1e-3):
     pi_star = torch.tensor(pi_star, dtype=torch.float, device=C.device)
 
     return pi_star 
+
+
+def get_true_y(y,span):
+    true_y = []
+    for i in range(len(y)):
+        filter_y = (y[i] != 0).int()
+        true_y.append(filter_y)
+    return true_y

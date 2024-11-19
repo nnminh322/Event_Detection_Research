@@ -310,26 +310,13 @@ def train(local_rank, args):
                     class_num=args.class_num + 1,
                 )
 
-                p_wi = return_dict["p_wi"]
+                p_wi_order = return_dict["p_wi_order"]
                 p_tj = return_dict["p_tj"]
-                # print(f"size p_wi: {p_wi.size()}")
-                # print(f"size train_masks: {train_masks.size()}")
+                D_W_P_order = return_dict['D_W_P_order']
+                D_T_P = return_dict['D_T_P']
 
-                D_W_P = F.softmax(
-                    p_wi.masked_fill(train_masks == 0, float("-inf")), dim=1
-                )
-                D_T_P = F.softmax(p_tj, dim=1)
-                loss_TI = compute_loss_TI(
-                    p_wi=p_wi, true_trig=true_trig, masks=train_masks
-                )
-                # print(f"loss_TI: {loss_TI}")
-
-                # print(f'size p_tj: {p_tj.size()}')
-                # print(p_tj)
-                # print(f'len true_label: {len(true_label)}')
-                # print(true_label)
                 loss_TP = compute_loss_TP(p_tj=p_tj, true_label=true_label)
-                # print(f"loss TP: {loss_TP}")
+
                 last_hidden_state = return_dict['last_hidden_state']
                 # print(f'size of last_hidden_state: {last_hidden_state}')
                 # print(last_hidden_state)
@@ -342,7 +329,7 @@ def train(local_rank, args):
                 # C = torch.norm(E_exp - T_exp, p=2, dim=-1)
                 C = 1 - torch.nn.functional.cosine_similarity(E_exp,T_exp,dim=3)
                 # print(f'C size: {C.size()}')
-                pi_star = compute_optimal_transport(D_W_P, D_T_P, C,train_masks)
+                pi_star = compute_optimal_transport(D_W_P_order, D_T_P, C,train_masks)
                 # print(f'size of pi_star: {pi_star.size()}')
 
                 L_task = compute_loss_task(pi_star=pi_star, pi_golden=pi_g)
@@ -359,7 +346,7 @@ def train(local_rank, args):
                 loss_ot = (
                     alpha_task * L_task
                     + alpha_OT * L_OT
-                    + alpha_LT_I * loss_TI
+                    # + alpha_LT_I * loss_TI
                     + alpha_LT_P * loss_TP
                 )
 

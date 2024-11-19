@@ -59,16 +59,13 @@ class BertED(nn.Module):
             for i in range(len(span)):
                 span_to_token = torch.tensor(list(dict.fromkeys(span[i].flatten().tolist()))) # flatten and remove duplicate  
                 last_hidden_state_follow_order_span = torch.tensor(x[i][span_to_token,:])
-                print(f'size of last_hidden_state_follow_order_span{i}: {last_hidden_state_follow_order_span.size()}')
-                p_wi_follow_order_span = torch.sigmoid(self.trigger_ffn(last_hidden_state_follow_order_span))
-                print(f'size of p_wi_follow_order_span{i}: {p_wi_follow_order_span.size()}')
-                D_W_P_follow_order_span = torch.softmax(p_wi_follow_order_span)
-                print(f'size of D_W_P_follow_order_span{i}: {D_W_P_follow_order_span.size()}')
+                p_wi_follow_order_span = torch.sigmoid(self.trigger_ffn(last_hidden_state_follow_order_span)).squeeze(1)
+                D_W_P_follow_order_span = torch.softmax(p_wi_follow_order_span,dim=0)
                 order_of_token_follow_span.append(span_to_token)
                 last_hidden_state_order.append(last_hidden_state_follow_order_span)
                 p_wi_order.append(p_wi_follow_order_span)
                 D_W_P_order.append(D_W_P_follow_order_span)
-
+                
                 if self.is_input_mapping:
                     x_cdt = torch.stack(
                         [
@@ -85,6 +82,7 @@ class BertED(nn.Module):
                     ) + torch.index_select(x[i], 0, span[i][:, 1])
                     # x = x_cdt.permute(1, 0, 2)
                 trig_feature.append(opt)
+                print(f'opt_size: {opt.size()}')
             trig_feature = torch.cat(trig_feature)
         outputs = self.fc(trig_feature)
         return_dict["outputs"] = outputs
@@ -100,31 +98,25 @@ class BertED(nn.Module):
             return_dict["feature_aug"] = feature_aug
             return_dict["outputs_aug"] = outputs_aug
 
-        # Trigger Identification
-        last_hidden_state = backbone_output.last_hidden_state
-        p_wi = torch.sigmoid(self.trigger_ffn(last_hidden_state)).squeeze(-1)
 
         label_embeddings = self.get_label_embeddings()
         label_embeddings = label_embeddings.unsqueeze(0).repeat(
             x.size(0), 1, 1
         )  # [Num_label, hidden_size] -> [Batch_size, Num_label, Hidden_size]
 
-        # e_cls = e_cls.unsqueeze(1).repeat(
-        #     1, self.num_labels, 1
-        # # )  # [Batch_size, hidden_size] -> [Batch_size, Num_label, hidden_size]
         e_cls_repeat_n_class = e_cls.unsqueeze(1).repeat([1, self.class_num, 1])
         concat = torch.cat(
             [label_embeddings, e_cls_repeat_n_class], dim=-1
         )  # Concat in last size dimention
-        print(f'size of concat: {concat.size()}')
         p_tj = torch.sigmoid(self.type_ffn(concat)).squeeze(-1)
-        # print(f"size p_wi: {p_wi.size()}")
-        # print(f"size p_tj: {p_tj.size()}") 
+        D_T_P = torch.softmax(p_tj,dim=-1)
+        return_dict['last_hidden_state_order'] = last_hidden_state_order
+        return_dict['p_wi_order'] = p_wi_order
+        return_dict['D_W_P_order']=D_W_P_order
+        return_dict['p_tj'] = p_tj
+        return_dict['D_T_P'] = D_T_P
 
-        return_dict["p_wi"] = p_wi
-        return_dict["p_tj"] = p_tj
-        return_dict["e_cls"] = e_cls
-        return_dict['last_hidden_state'] = x
+
 
         return return_dict
     def get_label_embeddings(self):
