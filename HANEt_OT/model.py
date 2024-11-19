@@ -50,18 +50,24 @@ class BertED(nn.Module):
         return_dict = {}
         backbone_output = self.backbone(x, attention_mask=masks)
         x, pooled_feat = backbone_output[0], backbone_output[1]
-        print(f'size of x: {x.size()}')
-        print(f'size of span: {span.size()}')
         context_feature = x.view(-1, x.shape[-1])
         e_cls = x[:, 0, :].clone()
         return_dict["reps"] = e_cls  # reps a.k.a e_cls
+        last_hidden_state_order,p_wi_order,D_W_P_order = [],[],[]
         if span != None:
             outputs, trig_feature,order_of_token_follow_span = [], [], []
             for i in range(len(span)):
-                span_to_token = torch.tensor(list(dict.fromkeys(span[0].flatten()))) # flatten and remove duplicate  
+                span_to_token = torch.tensor(list(dict.fromkeys(span[i].flatten().tolist()))) # flatten and remove duplicate  
+                last_hidden_state_follow_order_span = torch.tensor(x[i][span_to_token,:])
+                print(f'size of last_hidden_state_follow_order_span{i}: {last_hidden_state_follow_order_span.size()}')
+                p_wi_follow_order_span = torch.sigmoid(self.trigger_ffn(last_hidden_state_follow_order_span))
+                print(f'size of p_wi_follow_order_span{i}: {p_wi_follow_order_span.size()}')
+                D_W_P_follow_order_span = torch.softmax(p_wi_follow_order_span)
+                print(f'size of D_W_P_follow_order_span{i}: {D_W_P_follow_order_span.size()}')
                 order_of_token_follow_span.append(span_to_token)
-                print(f'span_to_token{i}: {span_to_token}')
-                
+                last_hidden_state_order.append(last_hidden_state_follow_order_span)
+                p_wi_order.append(p_wi_follow_order_span)
+                D_W_P_order.append(D_W_P_follow_order_span)
 
                 if self.is_input_mapping:
                     x_cdt = torch.stack(
