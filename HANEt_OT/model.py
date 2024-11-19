@@ -56,9 +56,11 @@ class BertED(nn.Module):
         e_cls = x[:, 0, :].clone()
         return_dict["reps"] = e_cls  # reps a.k.a e_cls
         if span != None:
-            outputs, trig_feature = [], []
+            outputs, trig_feature,order_of_token_follow_span = [], [], []
             for i in range(len(span)):
-
+                span_to_token = torch.tensor(list(dict.fromkeys(span[0].flatten()))) # flatten and remove duplicate  
+                order_of_token_follow_span.append(span_to_token)
+                print(f'span_to_token{i}: {span_to_token}')
                 
 
                 if self.is_input_mapping:
