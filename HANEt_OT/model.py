@@ -50,12 +50,17 @@ class BertED(nn.Module):
         return_dict = {}
         backbone_output = self.backbone(x, attention_mask=masks)
         x, pooled_feat = backbone_output[0], backbone_output[1]
+        print(f'size of x: {x.size()}')
+        print(f'size of span: {span.size()}')
         context_feature = x.view(-1, x.shape[-1])
         e_cls = x[:, 0, :].clone()
         return_dict["reps"] = e_cls  # reps a.k.a e_cls
         if span != None:
             outputs, trig_feature = [], []
             for i in range(len(span)):
+
+                
+
                 if self.is_input_mapping:
                     x_cdt = torch.stack(
                         [
@@ -103,7 +108,7 @@ class BertED(nn.Module):
         concat = torch.cat(
             [label_embeddings, e_cls_repeat_n_class], dim=-1
         )  # Concat in last size dimention
-        print(f'size of concat: {concat}')
+        print(f'size of concat: {concat.size()}')
         p_tj = torch.sigmoid(self.type_ffn(concat)).squeeze(-1)
         # print(f"size p_wi: {p_wi.size()}")
         # print(f"size p_tj: {p_tj.size()}") 
