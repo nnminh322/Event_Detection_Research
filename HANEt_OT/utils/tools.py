@@ -146,21 +146,25 @@ def compute_single_optimal_transport_for_1_sentence(p, q, C, epsilon=0.05):
 
     return pi_i_tensor
 
-def get_true_y(y, num_classes=args.class_num + 1):
+def get_true_y(y, num_classes=args.class_num + 1, device='cuda' if torch.cuda.is_available() else 'cpu'):
     true_trig, true_label = [], []
+
     for i in range(len(y)):
-        true_label_loop = torch.zeros(num_classes)
+        true_label_loop = torch.zeros(num_classes, device=device)  # Đưa tensor này lên GPU
         set_label = set(y[i].tolist())
+        
         for label in set_label:
             if label != 0:
                 true_label_loop += torch.nn.functional.one_hot(
-                    torch.tensor(label), num_classes=num_classes
+                    torch.tensor(label, device=device), num_classes=num_classes  # Đưa label lên GPU
                 )
 
-        filter_y = (y[i] != 0).int()
+        filter_y = (y[i] != 0).int().to(device)  # Đưa filter_y lên GPU
         true_trig.append(filter_y)
         true_label.append(true_label_loop)
+    
     return true_trig, true_label
+
 
 def compute_cost_transport(last_hidden_state_order, label_embeddings, num_classes = args.class_num+1):
     # last_hidden_state_order: [batch_size, num_span, hidden_dim]
