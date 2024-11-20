@@ -320,7 +320,7 @@ def train(local_rank, args):
                 pi_star = compute_optimal_transport_plane_for_batch(D_W_P_order=D_W_P_order,D_T_P=D_T_P,cost_matrix=cost_matrix)
                 # print(f'size of pi_star: {pi_star.size()}')
 
-                L_task = compute_loss_Task(pi_star=pi_star,y_true=train_y).requires_grad_()
+                L_task = compute_loss_Task(pi_star=pi_star,y_true=train_y)
                 # print(f'L_task: {L_task}')
                 # print(f'true_label size: {true_label.size()}')
                 # Tính L_task: Negative Log-Likelihood Loss

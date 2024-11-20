@@ -147,7 +147,9 @@ def compute_single_optimal_transport_for_1_sentence(p, q, C, epsilon=0.05):
     return pi_i_tensor
 
 
-def sinkhorn_pytorch_for_1_sentence(a, b, M, lambda_sh=20, numItermax=1000, stopThr=5e-3):
+def sinkhorn_pytorch_for_1_sentence(
+    a, b, M, lambda_sh=20, numItermax=1000, stopThr=5e-3
+):
     """
     Compute the Sinkhorn optimal transport matrix using PyTorch.
 
@@ -231,12 +233,13 @@ def compute_cost_transport(
 
 
 def compute_optimal_transport_plane_for_batch(D_W_P_order, D_T_P, cost_matrix):
-    print(f"D_W_P_order requires_grad: {D_W_P_order[0].requires_grad}")
-    print(f"D_T_P requires_grad: {D_T_P[0].requires_grad}")
-    print(f"cost_matrix requires_grad: {cost_matrix[0].requires_grad}")
-    
-    batch_size = len(D_W_P_order)
     cost_matrix = [c.detach() for c in cost_matrix]
+
+    # print(f"D_W_P_order requires_grad: {D_W_P_order[0].requires_grad}")
+    # print(f"D_T_P requires_grad: {D_T_P[0].requires_grad}")
+    # print(f"cost_matrix requires_grad: {cost_matrix[0].requires_grad}")
+
+    batch_size = len(D_W_P_order)
     pi_star_matrix = []
     for sentence in range(batch_size):
         pi_i = sinkhorn_pytorch_for_1_sentence(
