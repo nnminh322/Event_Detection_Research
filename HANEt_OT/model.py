@@ -16,29 +16,29 @@ class BertED(nn.Module):
     def __init__(self, class_num=args.class_num + 1, input_map=False, labels=[]):
         super().__init__()
         self.backbone = BertModel.from_pretrained(args.backbone)
-        # if not args.no_freeze_bert:
-        #     print("Freeze bert parameters")
-        for _, param in list(self.backbone.named_parameters()):
-            param.requires_grad = True
-        # else:
-        #     print("Update bert parameters")
+        if not args.no_freeze_bert:
+            print("Freeze bert parameters")
+            for _, param in list(self.backbone.named_parameters()):
+                param.requires_grad = True
+        else:
+            print("Update bert parameters")
         self.OT_layer = OptimalTransportLayer()
         self.class_num = class_num
         self.is_input_mapping = input_map
         self.input_dim = self.backbone.config.hidden_size
         self.labels = labels
         # self.fc = nn.Linear(self.input_dim, class_num)
-        # if self.is_input_mapping:
-        #     self.map_hidden_dim = 768  # 512 is implemented by the paper
-        #     self.map_input_dim = self.input_dim * 2
-        #     self.input_map = nn.Sequential(
-        #         nn.Linear(self.map_input_dim, self.map_hidden_dim),
-        #         nn.ReLU(),
-        #         nn.Dropout(0.2),
-        #         nn.Linear(self.map_hidden_dim, self.map_hidden_dim),
-        #         nn.ReLU(),
-        #     )
-        #     self.fc = nn.Linear(self.map_hidden_dim, class_num)
+        if self.is_input_mapping:
+            self.map_hidden_dim = 768  # 512 is implemented by the paper
+            self.map_input_dim = self.input_dim * 2
+            self.input_map = nn.Sequential(
+                nn.Linear(self.map_input_dim, self.map_hidden_dim),
+                nn.ReLU(),
+                nn.Dropout(0.2),
+                nn.Linear(self.map_hidden_dim, self.map_hidden_dim),
+                nn.ReLU(),
+            )
+            self.fc = nn.Linear(self.map_hidden_dim, class_num)
 
         self.label_embeddings = nn.Linear(class_num, self.backbone.config.hidden_size)
         nn.init.xavier_normal_(self.label_embeddings.weight)
@@ -62,20 +62,20 @@ class BertED(nn.Module):
             for i in range(len(span)):
      
                 
-                # if self.is_input_mapping:
-                #     x_cdt = torch.stack(
-                #         [
-                #             torch.index_select(x[i], 0, span[i][:, j])
-                #             for j in range(span[i].size(-1))
-                #         ]
-                #     )
-                #     x_cdt = x_cdt.permute(1, 0, 2)
-                #     x_cdt = x_cdt.contiguous().view(x_cdt.size(0), x_cdt.size(-1) * 2)
-                #     opt = self.input_map(x_cdt)
-                # else:
-                opt = torch.index_select(
-                    x[i], 0, span[i][:, 0]
-                ) + torch.index_select(x[i], 0, span[i][:, 1])
+                if self.is_input_mapping:
+                    x_cdt = torch.stack(
+                        [
+                            torch.index_select(x[i], 0, span[i][:, j])
+                            for j in range(span[i].size(-1))
+                        ]
+                    )
+                    x_cdt = x_cdt.permute(1, 0, 2)
+                    x_cdt = x_cdt.contiguous().view(x_cdt.size(0), x_cdt.size(-1) * 2)
+                    opt = self.input_map(x_cdt)
+                else:
+                    opt = torch.index_select(
+                        x[i], 0, span[i][:, 0]
+                    ) + torch.index_select(x[i], 0, span[i][:, 1])
                     # x = x_cdt.permute(1, 0, 2)
                 trig_feature.append(opt)
                 span_to_token = torch.tensor(list(dict.fromkeys(span[i].flatten().tolist()))) # flatten and remove duplicate  
