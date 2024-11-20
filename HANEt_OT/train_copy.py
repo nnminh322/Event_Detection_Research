@@ -338,9 +338,9 @@ def train(local_rank, args):
                 alpha_LT_P = 0.01
                 loss_ot = (
                     alpha_task * L_task
-                    + alpha_OT * L_OT
-                    + alpha_LT_I * loss_TI
-                    + alpha_LT_P * loss_TP
+                    # + alpha_OT * L_OT
+                    # + alpha_LT_I * loss_TI
+                    # + alpha_LT_P * loss_TP
                 )
 
                 # print(f"task {L_task}")
@@ -566,7 +566,7 @@ def train(local_rank, args):
                 #         loss = loss + args.alpha * loss_fd + args.beta * loss_pd
             
                 # loss.backward()
-                loss_ot.backward()
+                L_task.backward()
                 optimizer.step()
 
             logger.info(f"loss_ot: {loss_ot}")

@@ -17,7 +17,7 @@ class BertED(nn.Module):
         # if not args.no_freeze_bert:
         #     print("Freeze bert parameters")
         for _, param in list(self.backbone.named_parameters()):
-            param.requires_grad = False
+            param.requires_grad = True
         # else:
         #     print("Update bert parameters")
         self.class_num = class_num
@@ -83,20 +83,20 @@ class BertED(nn.Module):
                 trigger_feature_order.append(trigger_feature)
                 p_wi_order.append(p_wi_follow_order_span)
                 D_W_P_order.append(D_W_P_follow_order_span)
-            trig_feature = torch.cat(trig_feature)
+            # trig_feature = torch.cat(trig_feature)
         # outputs = self.fc(trig_feature)
         # return_dict["outputs"] = outputs
-        return_dict["context_feat"] = context_feature
-        return_dict["trig_feat"] = trig_feature
+        # return_dict["context_feat"] = context_feature
+        # return_dict["trig_feat"] = trig_feature
         # if args.single_label:
         #     return_outputs = self.fc(enc_out_feature).view(-1, args.class_num + 1)
         # else:
         #     return_outputs = self.fc(feature)
-        if aug is not None:
-            feature_aug = trig_feature + torch.randn_like(trig_feature) * aug
-            outputs_aug = self.fc(feature_aug)
-            return_dict["feature_aug"] = feature_aug
-            return_dict["outputs_aug"] = outputs_aug
+        # if aug is not None:
+        #     feature_aug = trig_feature + torch.randn_like(trig_feature) * aug
+        #     outputs_aug = self.fc(feature_aug)
+        #     return_dict["feature_aug"] = feature_aug
+        #     return_dict["outputs_aug"] = outputs_aug
 
 
         label_embeddings = self.get_label_embeddings()
