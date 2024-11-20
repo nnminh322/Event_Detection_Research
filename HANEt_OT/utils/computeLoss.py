@@ -98,4 +98,4 @@ def sinkhorn_pytorch(M, a, b, lambda_sh, numItermax=1000, stopThr=5e-3):
 
 
 def compute_loss_OT(Dist_pi_star, Dist_pi_g):
-    return torch.abs(Dist_pi_star - Dist_pi_g)
+    return torch.abs(Dist_pi_star-Dist_pi_g).mean()

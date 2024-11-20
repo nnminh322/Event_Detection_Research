@@ -209,21 +209,22 @@ def compute_optimal_transport_plane_for_batch(D_W_P_order, D_T_P, cost_matrix):
 
 def compute_Dist_pi_star(pi_star, cost_matrix):
     batch_size = len(pi_star)
-    Dist_pi_star = 0.0
+    Dist_pi_star = []
     for i in range(batch_size):
         Dist_i = torch.sum(pi_star[i] * cost_matrix[i])
-        Dist_pi_star += Dist_i
+        Dist_pi_star.append(Dist_i)
+    Dist_pi_star = torch.tensor(Dist_pi_star).to(device)
 
     return Dist_pi_star
 
 
 def compute_Dist_pi_g(pi_g, cost_matrix):
     batch_size = len(pi_g)
-    Dist_pi_g = 0.0
+    Dist_pi_g = []
     for i in range(batch_size):
         Dist_i = torch.sum(pi_g[i] * cost_matrix[i])
-        Dist_pi_star += Dist_i
-
+        Dist_pi_g.append(Dist_i)
+    Dist_pi_g = torch.tensor(Dist_pi_g).to(device)
     return Dist_pi_g
 
 

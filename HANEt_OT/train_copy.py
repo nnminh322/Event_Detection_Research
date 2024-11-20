@@ -324,10 +324,14 @@ def train(local_rank, args):
                 # print(f'L_task: {L_task}')
                 # print(f'true_label size: {true_label.size()}')
                 # Tính L_task: Negative Log-Likelihood Loss
+                print(f'train_y[2]: {train_y[2]}') 
                 pi_g = get_pi_g(y_true=train_y)
+                print(f'pi_g[2]: {pi_g[2]}')
+                print(f'pi_star[2]: {pi_star[2]}')
+                print(f'cost[2]: {cost_matrix[2]}')
                 Dist_pi_star = compute_Dist_pi_star(pi_star=pi_star,cost_matrix=cost_matrix)
                 Dist_pi_g = compute_Dist_pi_g(pi_g=pi_g,cost_matrix=cost_matrix)
-                L_OT = torch.abs(Dist_pi_star - Dist_pi_g).mean()
+                L_OT = compute_loss_OT(Dist_pi_star,Dist_pi_g)
                 alpha_task = 1.0
                 alpha_OT = 0.01
                 alpha_LT_I = 0.05
@@ -339,11 +343,11 @@ def train(local_rank, args):
                     + alpha_LT_P * loss_TP
                 )
 
-                print(f"task {L_task}")
-                print(f"OT: {L_OT}")
-                print(f"TI {loss_TI}")
-                print(f"TP {loss_TP}")
-                print(f"loss_ot {loss_ot}")
+                # print(f"task {L_task}")
+                # print(f"OT: {L_OT}")
+                # print(f"TI {loss_TI}")
+                # print(f"TP {loss_TP}")
+                # print(f"loss_ot {loss_ot}")
 
         #         loss, loss_ucl, loss_aug, loss_fd, loss_pd, loss_tlcl = 0, 0, 0, 0, 0, 0
         #         # ce_y = torch.cat(train_y)
