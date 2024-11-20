@@ -564,7 +564,7 @@ def train(local_rank, args):
                         loss = loss * (1 - w) + (loss_fd + loss_pd) * w
                     else:
                         loss = loss + args.alpha * loss_fd + args.beta * loss_pd
-
+            
                 loss.backward()
                 optimizer.step()
 
@@ -577,154 +577,82 @@ def train(local_rank, args):
             logger.info(f"loss_pd: {loss_pd}")
             logger.info(f"loss_all: {loss}")
 
-        if ((ep + 1) % args.eval_freq == 0 and args.early_stop) or (
-            ep + 1
-        ) == args.epochs:  # TODO TODO
-            # Evaluation process
-            logger.info("Evaluation process")
-            model.eval()
-            with torch.no_grad():
-                if args.single_label:
-                    eval_dataset = collect_eval_sldataset(
-                        args.dataset,
-                        args.data_root,
-                        "test",
-                        label2idx,
-                        None,
-                        [i for item in streams for i in item],
-                    )
-                else:
-                    eval_dataset = collect_dataset(
-                        args.dataset,
-                        args.data_root,
-                        "test",
-                        label2idx,
-                        None,
-                        [i for item in streams for i in item],
-                    )
-                eval_loader = DataLoader(
-                    dataset=eval_dataset,
-                    shuffle=False,
-                    batch_size=4,
-                    collate_fn=lambda x: x,
-                )
-                calcs = Calculator()
-                print('eval----------------------------')
-                # for batch in tqdm(eval_loader):
-                #     eval_x, eval_y, eval_masks, eval_span = zip(*batch)
-                #     eval_x = torch.LongTensor(eval_x).to(device)
-                #     eval_masks = torch.LongTensor(eval_masks).to(device)
-                #     eval_y = [torch.LongTensor(item).to(device) for item in eval_y]
-                #     eval_span = [
-                #         torch.LongTensor(item).to(device) for item in eval_span
-                #     ]
-                #     eval_return_dict = model(eval_x, eval_masks, eval_span)
+            if ((ep + 1) % args.eval_freq == 0 and args.early_stop) or (ep + 1) == args.epochs: # TODO TODO
+                # Evaluation process
+                logger.info("Evaluation process")
+                model.eval()
+                with torch.no_grad():
+                    if args.single_label:
+                        eval_dataset = collect_eval_sldataset(args.dataset, args.data_root, 'test', label2idx, None, [i for item in streams for i in item])
+                    else:
+                        eval_dataset = collect_dataset(args.dataset, args.data_root, 'test', label2idx, None, [i for item in streams for i in item])
+                    eval_loader = DataLoader(
+                        dataset=eval_dataset,
+                        shuffle=False,
+                        batch_size=4,
+                        collate_fn=lambda x:x)
+                    calcs = Calculator()
+                    for batch in tqdm(eval_loader):
+                        eval_x, eval_y, eval_masks, eval_span = zip(*batch)
+                        eval_x = torch.LongTensor(eval_x).to(device)
+                        eval_masks = torch.LongTensor(eval_masks).to(device)
+                        eval_y = [torch.LongTensor(item).to(device) for item in eval_y]
+                        eval_span = [torch.LongTensor(item).to(device) for item in eval_span]  
+                        eval_return_dict = model(eval_x, eval_masks, eval_span)
+                        eval_outputs = eval_return_dict['outputs']
+                        valid_mask_eval_op = torch.BoolTensor([idx in learned_types for idx in range(args.class_num + 1)]).to(device)
+                        for i in range(len(eval_y)):
+                            invalid_mask_eval_label = torch.BoolTensor([item not in learned_types for item in eval_y[i]]).to(device)
+                            eval_y[i].masked_fill_(invalid_mask_eval_label, 0)
+                        
+                        eval_D_W_P_order = eval_return_dict['D_W_P_order']
+                        eval_D_T_P = eval_return_dict['D_T_P']
+                        eval_last_hidden_state = eval_return_dict['last_hidden_state_order']
+                        eval_label_embeddings = model.get_label_embeddings()
+                        eval_cost_matrix = compute_cost_transport(eval_last_hidden_state,eval_label_embeddings)
+                        eval_pi_star = compute_optimal_transport_plane_for_batch(eval_D_W_P_order,eval_D_T_P,eval_cost_matrix)
+                        eval_y_pred = get_y_pred(eval_pi_star)
 
-                #     eval_D_W_P_order = eval_return_dict['D_W_P_order']
-                #     eval_D_T_P = eval_return_dict['D_T_P']
-                #     eval_E = eval_last_hidden_state
-                #     eval_T = model.get_label_embeddings()
-                #     eval_E_exp = eval_E.unsqueeze(2)
-                #     eval_T_exp = eval_T.unsqueeze(0).unsqueeze(0)
-                #     eval_C = torch.norm(eval_E_exp - eval_T_exp, p=2, dim=-1)
-                #     # print(f'C size: {C.size()}')
-                #     eval_pi_star = compute_optimal_transport_plane_for_batch(eval_D_W_P, eval_D_T_P, eval_C)
-                #     # print(f'size of eval_pi_star: {eval_pi_star.size()}')
-                #     # print(f'argmax eval_pi_star: {torch.argmax(eval_pi_star,dim=-1)}')
-                #     # eval_outputs = eval_return_dict["outputs"]
-                #     valid_mask_eval_op = torch.BoolTensor(
-                #         [idx in learned_types for idx in range(args.class_num + 1)]
-                #     ).to(device)
-                #     for i in range(len(eval_y)):
-                #         invalid_mask_eval_label = torch.BoolTensor(
-                #             [item not in learned_types for item in eval_y[i]]
-                #         ).to(device)
-                #         eval_y[i].masked_fill_(invalid_mask_eval_label, 0)
 
-                #     _, _, eval_pi_g = true_label_and_trigger(
-                #         train_x=eval_x,
-                #         train_y=eval_y,
-                #         train_masks=eval_masks,
-                #         train_span=eval_span,
-                #         class_num=args.class_num + 1,
-                #     )
-                #     valid_mask = eval_masks.unsqueeze(-1)  # [batch_size, seq_len, 1]
-                    
-                #     # Chuyển đổi pi_star và pi_golden thành dạng flat, chỉ giữ các vị trí không phải padding
-                #     pred_class = eval_pi_star.argmax(dim=-1)  # Lấy lớp dự đoán (có xác suất cao nhất) cho mỗi token
-                #     true_class = eval_pi_g.argmax(dim=-1)  # Nhãn thực tế (class index) cho mỗi token
-                    
-                #     # Áp dụng mask (loại bỏ các token padding)
-                #     pred_class = pred_class[valid_mask.squeeze(-1) == 1]
-                #     true_class = true_class[valid_mask.squeeze(-1) == 1]
-                #     calcs.extend(pred_class, true_class)
-    
-                #     bc, (precision, recall, micro_F1) = calcs.by_class(learned_types)   
-                #     # print(f'size of eval_pi_g: {eval_pi_g.size()}')
-                #     # print(f'eval_pi_g[0]: {eval_pi_g[0]}')
-                #     # if args.leave_zero:
-                #     #     eval_outputs[:, 0] = 0
-
-                #     # print(f'eval_outputs len: {len(eval_outputs)}')
-                #     # print(f'eval_outputs: {(eval_outputs)}')
-
-                #     # print(f'eval_outputs size: {eval_outputs.size()}')
-                #     # print(valid_mask_eval_op)
-                #     # eval_outputs = eval_outputs[:, valid_mask_eval_op].squeeze(-1)
-                #     # print(f'eval_outputs len: {len(eval_outputs)}')
-                #     # print(f'eval_outputs size: {eval_outputs.size()}')
-
-                #     # print(f'eval_outputs: {(eval_outputs)}')
-                #     # calcs.extend(eval_outputs.argmax(-1), torch.cat(eval_y))
-                #     # bc, (precision, recall, micro_F1) = calcs.by_class(learned_types)
-                #     if args.log:
-                #         writer.add_scalar(
-                #             f"score/epoch/marco_F1",
-                #             micro_F1,
-                #             ep + 1 + args.epochs * stage,
-                #         )
-                #     if args.log and (ep + 1) == args.epochs:
-                #         writer.add_scalar(f"score/stage/marco_F1", micro_F1, stage)
-                #     logger.info(f"marco F1 {micro_F1}")
-                #     dev_scores_ls.append(micro_F1)
-                #     logger.info(f"Dev scores list: {dev_scores_ls}")
-                #     logger.info(f"bc:{bc}")
-                #     if args.early_stop:
-                #         if dev_score is None or dev_score < micro_F1:
-                #             no_better = 0
-                #             dev_score = micro_F1
-                #             torch.save(model.state_dict(), e_pth)
-                #         else:
-                #             no_better += 1
-                #             logger.info(f"No better: {no_better}/{args.patience}")
-                #         if no_better >= args.patience:
-                #             logger.info(
-                #                 "Early stopping with dev_score: " + str(dev_score)
-                #             )
-                #             if args.log:
-                #                 writer.add_scalar(
-                #                     f"score/stage/marco_F1", micro_F1, stage
-                #                 )
-                #             break
+                        # if args.leave_zero:
+                        #     eval_outputs[:, 0] = 0
+                        # eval_outputs = eval_outputs[:, valid_mask_eval_op].squeeze(-1)
+                        calcs.extend(torch.cat(eval_y_pred), torch.cat(eval_y))
+                    bc, (precision, recall, micro_F1) = calcs.by_class(learned_types)
+                    if args.log:
+                        writer.add_scalar(f'score/epoch/marco_F1', micro_F1,  ep + 1 + args.epochs * stage)
+                    if args.log and (ep + 1) == args.epochs:
+                        writer.add_scalar(f'score/stage/marco_F1', micro_F1, stage)
+                    logger.info(f'marco F1 {micro_F1}')
+                    dev_scores_ls.append(micro_F1)
+                    logger.info(f"Dev scores list: {dev_scores_ls}")
+                    logger.info(f"bc:{bc}")
+                    if args.early_stop:
+                        if dev_score is None or dev_score < micro_F1:
+                            no_better = 0
+                            dev_score = micro_F1
+                            torch.save(model.state_dict(), e_pth)
+                        else:
+                            no_better += 1
+                            logger.info(f'No better: {no_better}/{args.patience}')
+                        if no_better >= args.patience:
+                            logger.info("Early stopping with dev_score: " + str(dev_score))
+                            if args.log:
+                                writer.add_scalar(f'score/stage/marco_F1', micro_F1, stage)
+                            break
 
         for tp in streams_indexed[stage]:
             if not tp == 0:
                 labels.pop(labels.index(tp))
         save_stage = stage
         if args.save_dir and local_rank == 0:
-            state = {
-                "model": model.state_dict(),
-                "optimizer": optimizer.state_dict(),
-                "stage": stage + 1,
-                "labels": labels,
-                "learned_types": learned_types,
-                "prev_learned_types": prev_learned_types,
-            }
+            state = {'model':model.state_dict(), 'optimizer':optimizer.state_dict(), 'stage':stage + 1, 
+                            'labels':labels, 'learned_types':learned_types, 'prev_learned_types':prev_learned_types}
             save_pth = os.path.join(args.save_dir, "perm" + str(args.perm_id))
             save_name = f"stage_{save_stage}_{cur_time}.pth"
             if not os.path.exists(save_pth):
                 os.makedirs(save_pth)
-            logger.info(f"state_dict saved to: {os.path.join(save_pth, save_name)}")
+            logger.info(f'state_dict saved to: {os.path.join(save_pth, save_name)}')
             torch.save(state, os.path.join(save_pth, save_name))
             os.remove(e_pth)
 

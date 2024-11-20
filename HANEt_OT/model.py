@@ -14,12 +14,12 @@ class BertED(nn.Module):
     def __init__(self, class_num=args.class_num + 1, input_map=False, labels=[]):
         super().__init__()
         self.backbone = BertModel.from_pretrained(args.backbone)
-        # if not args.no_freeze_bert:
-        #     print("Freeze bert parameters")
-        for _, param in list(self.backbone.named_parameters()):
-            param.requires_grad = False
-        # else:
-        #     print("Update bert parameters")
+        if not args.no_freeze_bert:
+            print("Freeze bert parameters")
+            for _, param in list(self.backbone.named_parameters()):
+                param.requires_grad = False
+        else:
+            print("Update bert parameters")
         self.class_num = class_num
         self.is_input_mapping = input_map
         self.input_dim = self.backbone.config.hidden_size
