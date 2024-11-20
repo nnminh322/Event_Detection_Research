@@ -196,9 +196,9 @@ def compute_cost_transport(
 
 
 def compute_optimal_transport_plane_for_batch(D_W_P_order, D_T_P, cost_matrix):
-    print(f"D_W_P_order requires_grad: {D_W_P_order.requires_grad}")
-    print(f"D_T_P requires_grad: {D_T_P.requires_grad}")
-    print(f"cost_matrix requires_grad: {cost_matrix.requires_grad}")
+    print(f"D_W_P_order requires_grad: {D_W_P_order[0].requires_grad}")
+    print(f"D_T_P requires_grad: {D_T_P[0].requires_grad}")
+    print(f"cost_matrix requires_grad: {cost_matrix[0].requires_grad}")
     
     batch_size = len(D_W_P_order)
     pi_star_matrix = []
