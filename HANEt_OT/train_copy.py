@@ -274,11 +274,11 @@ def train(local_rank, args):
                 #
                 return_dict = model(train_x, train_masks, train_span)
 
-                outputs, context_feat, trig_feat = (
-                    return_dict["outputs"],
-                    return_dict["context_feat"],
-                    return_dict["trig_feat"],
-                )
+                # outputs, context_feat, trig_feat = (
+                #     return_dict["outputs"],
+                #     return_dict["context_feat"],
+                #     return_dict["trig_feat"],
+                # )
                 # print("trigg------")
                 # print(len(trig_feat))
                 # print(trig_feat)
