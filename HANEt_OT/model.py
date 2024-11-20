@@ -24,7 +24,7 @@ class BertED(nn.Module):
         self.is_input_mapping = input_map
         self.input_dim = self.backbone.config.hidden_size
         self.labels = labels
-        self.fc = nn.Linear(self.input_dim, class_num)
+        # self.fc = nn.Linear(self.input_dim, class_num)
         # if self.is_input_mapping:
         #     self.map_hidden_dim = 768  # 512 is implemented by the paper
         #     self.map_input_dim = self.input_dim * 2
@@ -84,8 +84,8 @@ class BertED(nn.Module):
                 p_wi_order.append(p_wi_follow_order_span)
                 D_W_P_order.append(D_W_P_follow_order_span)
             trig_feature = torch.cat(trig_feature)
-        outputs = self.fc(trig_feature)
-        return_dict["outputs"] = outputs
+        # outputs = self.fc(trig_feature)
+        # return_dict["outputs"] = outputs
         return_dict["context_feat"] = context_feature
         return_dict["trig_feat"] = trig_feature
         # if args.single_label:
