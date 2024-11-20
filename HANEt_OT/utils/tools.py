@@ -168,6 +168,10 @@ def sinkhorn_pytorch_for_1_sentence(
     u = torch.ones_like(a)  # Initialize u
     v = torch.ones_like(b)  # Initialize v
 
+    print(f'a.requires_grad(): {a.requires_grad()}')
+    print(f'b.requires_grad(): {b.requires_grad()}')
+    print(f'M.requires_grad(): {M.requires_grad()}')
+
     for _ in range(numItermax):
         u_prev = (
             u.clone()
@@ -235,9 +239,9 @@ def compute_cost_transport(
 def compute_optimal_transport_plane_for_batch(D_W_P_order, D_T_P, cost_matrix):
     cost_matrix = [c.detach() for c in cost_matrix]
 
-    # print(f"D_W_P_order requires_grad: {D_W_P_order[0].requires_grad}")
-    # print(f"D_T_P requires_grad: {D_T_P[0].requires_grad}")
-    # print(f"cost_matrix requires_grad: {cost_matrix[0].requires_grad}")
+    print(f"D_W_P_order requires_grad: {D_W_P_order[0].requires_grad}")
+    print(f"D_T_P requires_grad: {D_T_P[0].requires_grad}")
+    print(f"cost_matrix requires_grad: {cost_matrix[0].requires_grad}")
 
     batch_size = len(D_W_P_order)
     pi_star_matrix = []
