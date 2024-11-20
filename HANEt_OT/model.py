@@ -25,17 +25,17 @@ class BertED(nn.Module):
         self.input_dim = self.backbone.config.hidden_size
         self.labels = labels
         self.fc = nn.Linear(self.input_dim, class_num)
-        if self.is_input_mapping:
-            self.map_hidden_dim = 768  # 512 is implemented by the paper
-            self.map_input_dim = self.input_dim * 2
-            self.input_map = nn.Sequential(
-                nn.Linear(self.map_input_dim, self.map_hidden_dim),
-                nn.ReLU(),
-                nn.Dropout(0.2),
-                nn.Linear(self.map_hidden_dim, self.map_hidden_dim),
-                nn.ReLU(),
-            )
-            self.fc = nn.Linear(self.map_hidden_dim, class_num)
+        # if self.is_input_mapping:
+        #     self.map_hidden_dim = 768  # 512 is implemented by the paper
+        #     self.map_input_dim = self.input_dim * 2
+        #     self.input_map = nn.Sequential(
+        #         nn.Linear(self.map_input_dim, self.map_hidden_dim),
+        #         nn.ReLU(),
+        #         nn.Dropout(0.2),
+        #         nn.Linear(self.map_hidden_dim, self.map_hidden_dim),
+        #         nn.ReLU(),
+        #     )
+        #     self.fc = nn.Linear(self.map_hidden_dim, class_num)
 
         self.label_embeddings = nn.Linear(class_num, self.backbone.config.hidden_size)
         nn.init.xavier_normal_(self.label_embeddings.weight)
