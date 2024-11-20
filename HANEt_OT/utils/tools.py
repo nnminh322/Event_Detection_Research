@@ -239,11 +239,12 @@ def get_pi_g(y_true, num_classes=args.class_num + 1):
 
     return pi_g
 
+
 def get_y_pred(pi_star):
     batch_size = len(pi_star)
     y_pred = []
     for i in range(batch_size):
-        y_pred_i = torch.argmax(pi_star[i]).to(device)
+        y_pred_i = torch.argmax(pi_star[i], dim=-1).to(device)
         y_pred.append(y_pred_i)
-    
+
     return y_pred

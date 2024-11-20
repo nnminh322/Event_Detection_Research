@@ -59,20 +59,20 @@ class BertED(nn.Module):
             for i in range(len(span)):
      
                 
-                if self.is_input_mapping:
-                    x_cdt = torch.stack(
-                        [
-                            torch.index_select(x[i], 0, span[i][:, j])
-                            for j in range(span[i].size(-1))
-                        ]
-                    )
-                    x_cdt = x_cdt.permute(1, 0, 2)
-                    x_cdt = x_cdt.contiguous().view(x_cdt.size(0), x_cdt.size(-1) * 2)
-                    opt = self.input_map(x_cdt)
-                else:
-                    opt = torch.index_select(
-                        x[i], 0, span[i][:, 0]
-                    ) + torch.index_select(x[i], 0, span[i][:, 1])
+                # if self.is_input_mapping:
+                #     x_cdt = torch.stack(
+                #         [
+                #             torch.index_select(x[i], 0, span[i][:, j])
+                #             for j in range(span[i].size(-1))
+                #         ]
+                #     )
+                #     x_cdt = x_cdt.permute(1, 0, 2)
+                #     x_cdt = x_cdt.contiguous().view(x_cdt.size(0), x_cdt.size(-1) * 2)
+                #     opt = self.input_map(x_cdt)
+                # else:
+                opt = torch.index_select(
+                    x[i], 0, span[i][:, 0]
+                ) + torch.index_select(x[i], 0, span[i][:, 1])
                     # x = x_cdt.permute(1, 0, 2)
                 trig_feature.append(opt)
                 span_to_token = torch.tensor(list(dict.fromkeys(span[i].flatten().tolist()))) # flatten and remove duplicate  
