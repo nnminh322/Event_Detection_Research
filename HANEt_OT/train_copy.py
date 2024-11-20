@@ -315,12 +315,13 @@ def train(local_rank, args):
                 label_embeddings = model.get_label_embeddings()
                 # print(f'size of last_hidden_state: {last_hidden_state}')
                 # print(last_hidden_state)
-                cost_matrix = compute_cost_transport(last_hidden_state_order=last_hidden_state_order,label_embeddings=label_embeddings)
+                # cost_matrix = compute_cost_transport(last_hidden_state_order=last_hidden_state_order,label_embeddings=label_embeddings)
                 # print(f'cost_matrix[0].requires_grad: {cost_matrix[0].requires_grad}')
-
+                cost_matrix = return_dict['cost_matrix']
                 # print(f'C size: {C.size()}')
-                pi_star = compute_optimal_transport_plane_for_batch(D_W_P_order=D_W_P_order,D_T_P=D_T_P,cost_matrix=cost_matrix)
+                # pi_star = compute_optimal_transport_plane_for_batch(D_W_P_order=D_W_P_order,D_T_P=D_T_P,cost_matrix=cost_matrix)
                 # print(f'size of pi_star: {pi_star.size()}')
+                pi_star = return_dict['pi_star']
 
                 L_task = compute_loss_Task(pi_star=pi_star,y_true=train_y)
                 # print('---in L_task---')
@@ -573,11 +574,11 @@ def train(local_rank, args):
                 #     else:
                 #         loss = loss + args.alpha * loss_fd + args.beta * loss_pd
             
-                loss_ot.backward()
+                L_task.backward()
                 # L_task.backward()
                 optimizer.step()
 
-            logger.info(f"loss_ot: {loss_ot}")
+            logger.info(f"loss_ot: {L_task}")
             # logger.info(f"loss_ucl: {loss_ucl}")
             # logger.info(f"loss_tlcl: {loss_tlcl}")
             # logger.info(f'loss_ecl: {loss_ecl}')

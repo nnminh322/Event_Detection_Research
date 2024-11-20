@@ -5,6 +5,8 @@ import torch.nn.functional as F
 from configs import parse_arguments
 from torch.nn.utils.rnn import unpad_sequence
 from random import shuffle
+from utils.Optimal_Transport import OptimalTransportLayer
+from utils.tools import *
 
 args = parse_arguments()
 device = torch.device(args.device if torch.cuda.is_available() and args.device != "cpu" else "cpu")  # type: ignore
@@ -20,6 +22,7 @@ class BertED(nn.Module):
             param.requires_grad = True
         # else:
         #     print("Update bert parameters")
+        self.OT_layer = OptimalTransportLayer()
         self.class_num = class_num
         self.is_input_mapping = input_map
         self.input_dim = self.backbone.config.hidden_size
@@ -83,6 +86,8 @@ class BertED(nn.Module):
                 trigger_feature_order.append(trigger_feature)
                 p_wi_order.append(p_wi_follow_order_span)
                 D_W_P_order.append(D_W_P_follow_order_span)
+
+        
             # trig_feature = torch.cat(trig_feature)
         # outputs = self.fc(trig_feature)
         # return_dict["outputs"] = outputs
@@ -110,11 +115,19 @@ class BertED(nn.Module):
         )  # Concat in last size dimention
         p_tj = torch.sigmoid(self.type_ffn(concat)).squeeze(-1)
         D_T_P = torch.softmax(p_tj,dim=-1)
+        cost_matrix = compute_cost_transport(trigger_feature_order,label_embeddings)
+        pi_star = []
+        batch_size = len(cost_matrix)
+        for i in range(batch_size):
+            pi_star_i = self.OT_layer(cost_matrix[i],D_W_P_order[i].unsqueeze(0), D_T_P[i].unsqueeze(0))
+            pi_star.append(pi_star_i)
         return_dict['last_hidden_state_order'] = trigger_feature_order
         return_dict['p_wi_order'] = p_wi_order
         return_dict['D_W_P_order']=D_W_P_order
         return_dict['p_tj'] = p_tj
         return_dict['D_T_P'] = D_T_P
+        return_dict['pi_star'] = pi_star
+        return_dict['cost_matrix'] = cost_matrix
 
         # print('----check-sum-p,q=1------')
         # for i in range(len(D_W_P_order)):
