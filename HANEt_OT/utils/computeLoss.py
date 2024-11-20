@@ -42,6 +42,9 @@ def compute_loss_TP(p_tj, true_label):
 
 
 def compute_loss_Task(pi_star, y_true):
+    print(f"Pi_star requires_grad: {pi_star.requires_grad}")
+    print(f"Y_true requires_grad: {y_true.requires_grad}")
+    
     loss_Task = 0.0
     batch_size = len(pi_star)
     for i in range(batch_size):
