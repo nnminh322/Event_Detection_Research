@@ -168,9 +168,9 @@ def sinkhorn_pytorch_for_1_sentence(
     u = torch.ones_like(a)  # Initialize u
     v = torch.ones_like(b)  # Initialize v
 
-    print(f'a.requires_grad(): {a.requires_grad()}')
-    print(f'b.requires_grad(): {b.requires_grad()}')
-    print(f'M.requires_grad(): {M.requires_grad()}')
+    print(f'a.requires_grad: {a.requires_grad}')
+    print(f'b.requires_grad: {b.requires_grad}')
+    print(f'M.requires_grad: {M.requires_grad}')
 
     for _ in range(numItermax):
         u_prev = (

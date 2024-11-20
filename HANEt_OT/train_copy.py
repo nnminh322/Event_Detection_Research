@@ -316,7 +316,7 @@ def train(local_rank, args):
                 # print(f'size of last_hidden_state: {last_hidden_state}')
                 # print(last_hidden_state)
                 cost_matrix = compute_cost_transport(last_hidden_state_order=last_hidden_state_order,label_embeddings=label_embeddings)
-                print(f'cost_matrix[0].requires_grad(): {cost_matrix[0].requires_grad()}')
+                print(f'cost_matrix[0].requires_grad: {cost_matrix[0].requires_grad}')
 
                 # print(f'C size: {C.size()}')
                 pi_star = compute_optimal_transport_plane_for_batch(D_W_P_order=D_W_P_order,D_T_P=D_T_P,cost_matrix=cost_matrix)
@@ -324,9 +324,9 @@ def train(local_rank, args):
 
                 L_task = compute_loss_Task(pi_star=pi_star,y_true=train_y)
                 print('---in L_task---')
-                print(f'L_task.requires_grad(): {L_task.requires_grad()}')
-                print(f'pi_star.requires_grad(): {pi_star.requires_grad()}')
-                print(f'train_y.requires_grad(): {train_y.requires_grad()}')
+                print(f'L_task.requires_grad: {L_task.requires_grad}')
+                print(f'pi_star.requires_grad: {pi_star.requires_grad}')
+                print(f'train_y.requires_grad: {train_y.requires_grad}')
 
 
                 # print(f'L_task: {L_task}')
