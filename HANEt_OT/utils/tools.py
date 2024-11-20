@@ -147,6 +147,41 @@ def compute_single_optimal_transport_for_1_sentence(p, q, C, epsilon=0.05):
     return pi_i_tensor
 
 
+def sinkhorn_pytorch_for_1_sentence(a, b, M, lambda_sh=20, numItermax=1000, stopThr=5e-3):
+    """
+    Compute the Sinkhorn optimal transport matrix using PyTorch.
+
+    Args:
+        M (torch.Tensor): Cost matrix of shape (n, m).
+        a (torch.Tensor): Source distribution of shape (n,).
+        b (torch.Tensor): Target distribution of shape (m,).
+        lambda_sh (float): Regularization parameter (1 / epsilon).
+        numItermax (int): Maximum number of iterations.
+        stopThr (float): Stopping threshold for convergence.
+
+    Returns:
+        torch.Tensor: Optimal transport matrix π of shape (n, m).
+    """
+    K = torch.exp(-M * lambda_sh)  # Kernel matrix
+    u = torch.ones_like(a)  # Initialize u
+    v = torch.ones_like(b)  # Initialize v
+
+    for _ in range(numItermax):
+        u_prev = (
+            u.clone()
+        )  # Keep track of the previous value of u for convergence check
+        u = a / (K @ v)
+        v = b / (K.t() @ u)
+
+        # Check for convergence
+        if torch.norm(u - u_prev, p=1) < stopThr:
+            break
+
+    # Compute the optimal transport matrix π
+    pi = torch.diag(u) @ K @ torch.diag(v)
+    return pi
+
+
 def get_true_y(
     y,
     num_classes=args.class_num + 1,
@@ -204,7 +239,7 @@ def compute_optimal_transport_plane_for_batch(D_W_P_order, D_T_P, cost_matrix):
     cost_matrix = [c.detach() for c in cost_matrix]
     pi_star_matrix = []
     for sentence in range(batch_size):
-        pi_i = compute_single_optimal_transport_for_1_sentence(
+        pi_i = sinkhorn_pytorch_for_1_sentence(
             D_W_P_order[sentence], D_T_P[sentence], cost_matrix[sentence]
         )
         pi_star_matrix.append(pi_i)
