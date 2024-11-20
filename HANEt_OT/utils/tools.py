@@ -146,46 +146,94 @@ def compute_single_optimal_transport_for_1_sentence(p, q, C, epsilon=0.05):
 
     return pi_i_tensor
 
-def get_true_y(y, num_classes=args.class_num + 1, device='cuda' if torch.cuda.is_available() else 'cpu'):
+
+def get_true_y(
+    y,
+    num_classes=args.class_num + 1,
+    device="cuda" if torch.cuda.is_available() else "cpu",
+):
     true_trig, true_label = [], []
 
     for i in range(len(y)):
-        true_label_loop = torch.zeros(num_classes, device=device)  # Đưa tensor này lên GPU
+        true_label_loop = torch.zeros(
+            num_classes, device=device
+        )  # Đưa tensor này lên GPU
         set_label = set(y[i].tolist())
-        
+
         for label in set_label:
             if label != 0:
                 true_label_loop += torch.nn.functional.one_hot(
-                    torch.tensor(label, device=device), num_classes=num_classes  # Đưa label lên GPU
+                    torch.tensor(label, device=device),
+                    num_classes=num_classes,  # Đưa label lên GPU
                 )
 
         filter_y = (y[i] != 0).int().to(device)  # Đưa filter_y lên GPU
         true_trig.append(filter_y)
         true_label.append(true_label_loop)
-    
+
     return true_trig, true_label
 
 
-def compute_cost_transport(last_hidden_state_order, label_embeddings, num_classes = args.class_num+1):
+def compute_cost_transport(
+    last_hidden_state_order, label_embeddings, num_classes=args.class_num + 1
+):
     # last_hidden_state_order: [batch_size, num_span, hidden_dim]
     # label_embedding: [num_class, hidden_dim]
-    
+
     batch_size = len(last_hidden_state_order)
     cost_matrix = []
     for i in range(batch_size):
         num_span = last_hidden_state_order[i].size(0)
-        label_embeddings_scale = label_embeddings.unsqueeze(0).repeat([num_span,1,1])
-        last_hidden_state_order_scale = last_hidden_state_order[i].unsqueeze(1).repeat([1,num_classes,1])
-        cost = 1-torch.nn.functional.cosine_similarity(last_hidden_state_order_scale,label_embeddings_scale,dim=-1)
+        label_embeddings_scale = label_embeddings.unsqueeze(0).repeat([num_span, 1, 1])
+        last_hidden_state_order_scale = (
+            last_hidden_state_order[i].unsqueeze(1).repeat([1, num_classes, 1])
+        )
+        cost = 1 - torch.nn.functional.cosine_similarity(
+            last_hidden_state_order_scale, label_embeddings_scale, dim=-1
+        )
         cost_matrix.append(cost)
     return cost_matrix
 
-def compute_optimal_transport_plane_for_batch(D_W_P_order,D_T_P, cost_matrix):
+
+def compute_optimal_transport_plane_for_batch(D_W_P_order, D_T_P, cost_matrix):
     batch_size = len(D_W_P_order)
     pi_star_matrix = []
     for sentence in range(batch_size):
-        pi_i = compute_single_optimal_transport_for_1_sentence(D_W_P_order[sentence],D_T_P[sentence],cost_matrix[sentence])
+        pi_i = compute_single_optimal_transport_for_1_sentence(
+            D_W_P_order[sentence], D_T_P[sentence], cost_matrix[sentence]
+        )
         pi_star_matrix.append(pi_i)
-    
+
     return pi_star_matrix
 
+
+def compute_Dist_pi_star(pi_star, cost_matrix):
+    batch_size = len(pi_star)
+    Dist_pi_star = 0.0
+    for i in range(batch_size):
+        Dist_i = torch.sum(pi_star[i] * cost_matrix[i])
+        Dist_pi_star += Dist_i
+
+    return Dist_pi_star
+
+
+def compute_Dist_pi_g(pi_g, cost_matrix):
+    batch_size = len(pi_g)
+    Dist_pi_g = 0.0
+    for i in range(batch_size):
+        Dist_i = torch.sum(pi_g[i] * cost_matrix[i])
+        Dist_pi_star += Dist_i
+
+    return Dist_pi_g
+
+
+def get_pi_g(y_true, num_classes=args.class_num + 1):
+    batch_size = len(y_true)
+    pi_g = []
+    for i in range(batch_size):
+        pi_g_i = torch.stack(
+            [torch.nn.functional.one_hot(x, num_classes=num_classes) for x in y_true[i]]
+        )
+        pi_g.append(pi_g_i)
+
+    return pi_g

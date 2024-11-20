@@ -45,9 +45,12 @@ def compute_loss_Task(pi_star, y_true):
     loss_Task = 0.0
     batch_size = len(pi_star)
     for i in range(batch_size):
-        sentence_loss = -torch.log(pi_star[i].gather(1,y_true[i].unsqueeze(1))).sum() / len(pi_star[i])
-        loss_Task+=sentence_loss
-    return loss_Task/batch_size
+        sentence_loss = -torch.log(
+            pi_star[i].gather(1, y_true[i].unsqueeze(1))
+        ).sum() / len(pi_star[i])
+        loss_Task += sentence_loss
+    return loss_Task / batch_size
+
 
 def sinkhorn_pytorch(M, a, b, lambda_sh, numItermax=1000, stopThr=5e-3):
     u = torch.ones_like(a) / a.size(0)
@@ -70,7 +73,7 @@ def sinkhorn_pytorch(M, a, b, lambda_sh, numItermax=1000, stopThr=5e-3):
 
     def err_f1(K, u, v, b):
         bb = v * torch.matmul(K.t(), u)
-        err = torch.norm(torch.sum(torch.abs(bb - b), dim=0), p=float('inf'))
+        err = torch.norm(torch.sum(torch.abs(bb - b), dim=0), p=float("inf"))
         return err
 
     def err_f2(err):
@@ -92,3 +95,7 @@ def sinkhorn_pytorch(M, a, b, lambda_sh, numItermax=1000, stopThr=5e-3):
 
     sinkhorn_divergences = torch.sum(u * torch.matmul(K * M, v), dim=0)
     return sinkhorn_divergences
+
+
+def compute_loss_OT(Dist_pi_star, Dist_pi_g):
+    return torch.abs(Dist_pi_star - Dist_pi_g)

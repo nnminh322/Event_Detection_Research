@@ -321,30 +321,29 @@ def train(local_rank, args):
                 # print(f'size of pi_star: {pi_star.size()}')
 
                 L_task = compute_loss_Task(pi_star=pi_star,y_true=train_y)
-                print(f'L_task: {L_task}')
+                # print(f'L_task: {L_task}')
                 # print(f'true_label size: {true_label.size()}')
                 # Tính L_task: Negative Log-Likelihood Loss
-        #         C = []
-        #         pi_g = []
-        #         Dist_pi_star = (pi_star * C).sum(dim=[1, 2])
-        #         Dist_pi_g = (pi_g * C).sum(dim=[1, 2])
-        #         L_OT = torch.abs(Dist_pi_star - Dist_pi_g).mean()
-        #         alpha_task = 1.0
-        #         alpha_OT = 0.01
-        #         alpha_LT_I = 0.05
-        #         alpha_LT_P = 0.01
-        #         loss_ot = (
-        #             alpha_task * L_task
-        #             + alpha_OT * L_OT
-        #             # + alpha_LT_I * loss_TI
-        #             + alpha_LT_P * loss_TP
-        #         )
+                pi_g = get_pi_g(y_true=train_y)
+                Dist_pi_star = compute_Dist_pi_star(pi_star=pi_star,cost_matrix=cost_matrix)
+                Dist_pi_g = compute_Dist_pi_g(pi_g=pi_g,cost_matrix=cost_matrix)
+                L_OT = torch.abs(Dist_pi_star - Dist_pi_g).mean()
+                alpha_task = 1.0
+                alpha_OT = 0.01
+                alpha_LT_I = 0.05
+                alpha_LT_P = 0.01
+                loss_ot = (
+                    alpha_task * L_task
+                    + alpha_OT * L_OT
+                    + alpha_LT_I * loss_TI
+                    + alpha_LT_P * loss_TP
+                )
 
-        #         # print(f"task {L_task}")
-        #         # print(f"OT: {L_OT}")
-        #         # print(f"TI {loss_TI}")
-        #         # print(f"TP {loss_TP}")
-        #         # print(f"loss_ot {loss_ot}")
+                print(f"task {L_task}")
+                print(f"OT: {L_OT}")
+                print(f"TI {loss_TI}")
+                print(f"TP {loss_TP}")
+                print(f"loss_ot {loss_ot}")
 
         #         loss, loss_ucl, loss_aug, loss_fd, loss_pd, loss_tlcl = 0, 0, 0, 0, 0, 0
         #         # ce_y = torch.cat(train_y)
