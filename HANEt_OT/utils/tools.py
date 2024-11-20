@@ -134,15 +134,15 @@ def compute_single_optimal_transport_for_1_sentence(p, q, C, epsilon=0.05):
     device = p.device
 
     # Chuyển tensor PyTorch thành numpy nếu cần
-    p_i = p.detach().cpu().numpy()
-    q_i = q.detach().cpu().numpy()
+    p_i = p.cpu().numpy()
+    q_i = q.cpu().numpy()
     C_i = C.detach().cpu().numpy()
 
     # Sử dụng phương thức Sinkhorn từ thư viện optimal transport
     pi_i = ot.sinkhorn(p_i, q_i, C_i, reg=epsilon)
 
     # Chuyển lại kết quả thành tensor PyTorch và đưa về đúng device
-    pi_i_tensor = torch.tensor(pi_i, device=device)
+    pi_i_tensor = torch.tensor(pi_i, device=device, requires_grad=True)
 
     return pi_i_tensor
 
@@ -201,6 +201,7 @@ def compute_optimal_transport_plane_for_batch(D_W_P_order, D_T_P, cost_matrix):
     print(f"cost_matrix requires_grad: {cost_matrix[0].requires_grad}")
     
     batch_size = len(D_W_P_order)
+    cost_matrix = [c.detach() for c in cost_matrix]
     pi_star_matrix = []
     for sentence in range(batch_size):
         pi_i = compute_single_optimal_transport_for_1_sentence(
