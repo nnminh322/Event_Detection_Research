@@ -27,7 +27,7 @@ do
                             --dweight_loss \
                             --rep-aug mean \
                             --distill mul \
-                            --epoch 30 \
+                            --epoch 5 \
                             --class-num $m \
                             --single-label \
                             --cl-aug $k \
