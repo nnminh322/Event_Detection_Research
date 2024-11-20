@@ -105,6 +105,7 @@ class BertED(nn.Module):
 
 
         label_embeddings = self.get_label_embeddings()
+        cost_matrix = compute_cost_transport(trigger_feature_order,label_embeddings)
         label_embeddings = label_embeddings.unsqueeze(0).repeat(
             x.size(0), 1, 1
         )  # [Num_label, hidden_size] -> [Batch_size, Num_label, Hidden_size]
@@ -115,7 +116,6 @@ class BertED(nn.Module):
         )  # Concat in last size dimention
         p_tj = torch.sigmoid(self.type_ffn(concat)).squeeze(-1)
         D_T_P = torch.softmax(p_tj,dim=-1)
-        cost_matrix = compute_cost_transport(trigger_feature_order,label_embeddings)
         pi_star = []
         batch_size = len(cost_matrix)
         for i in range(batch_size):
