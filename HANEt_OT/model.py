@@ -40,8 +40,8 @@ class BertED(nn.Module):
             )
             self.fc = nn.Linear(self.map_hidden_dim, class_num)
 
-        self.label_embeddings = nn.Linear(class_num, self.backbone.config.hidden_size)
-        nn.init.xavier_normal_(self.label_embeddings.weight)
+        self.label_embeddings = torch.empty([class_num,self.backbone.config.hidden_size],requires_grad=True)
+        torch.nn.init.xavier_normal_(self.label_embeddings)
 
         self.trigger_ffn = nn.Linear(self.backbone.config.hidden_size, 1)
         self.type_ffn = nn.Linear(
@@ -138,8 +138,8 @@ class BertED(nn.Module):
 
         return return_dict
     def get_label_embeddings(self):
-        return self.label_embeddings.weight.transpose(0,1)
-
+        return self.label_embeddings
+    
     def forward_backbone(self, x, masks):
         x = self.backbone(x, attention_mask=masks)
         x = x.last_hidden_state
