@@ -41,28 +41,40 @@ def compute_loss_TP(p_tj, true_label):
     return loss_TP / len(true_label)
 
 
-def compute_loss_Task(pi_star, y_true):
+def compute_loss_Task(pi_star_list, y_true_list):
     """
-    Compute L_task using negative log-likelihood over the predicted alignment matrix π*.
+    Compute L_task for a batch with variable-length π* tensors.
 
     Args:
-        pi_star (torch.Tensor): Predicted alignment matrix (batch_size, n_labels).
-        y_true (torch.Tensor): Ground truth labels for each word (batch_size,).
+        pi_star_list (list of torch.Tensor): List of predicted alignment matrices, 
+                                             each of shape (num_words, num_labels).
+        y_true_list (list of torch.Tensor): List of ground truth label indices, 
+                                            each of shape (num_words,).
 
     Returns:
         torch.Tensor: Scalar loss value.
     """
-    # Lấy xác suất của nhãn đúng từ ma trận π*
-    # torch.gather chọn giá trị tương ứng với y_true dọc theo chiều thứ 1
-    batch_size = pi_star.size(0)
-    true_probs = pi_star.gather(1, y_true.unsqueeze(1)).squeeze(1)  # (batch_size,)
+    total_loss = 0.0
+    total_words = 0  # Tổng số từ trong batch
 
-    # Đảm bảo không có log(0) bằng cách thêm epsilon nhỏ
-    epsilon = 1e-12
-    true_probs = torch.clamp(true_probs, min=epsilon)
+    epsilon = 1e-12  # Để tránh log(0)
 
-    # Tính negative log-likelihood loss
-    loss_Task = -torch.log(true_probs).mean()  # Trung bình trên batch size
+    for pi_star, y_true in zip(pi_star_list, y_true_list):
+        # Lấy xác suất của nhãn đúng từ ma trận π*
+        true_probs = pi_star[torch.arange(len(y_true)), y_true]
+
+        # Đảm bảo không có log(0)
+        true_probs = torch.clamp(true_probs, min=epsilon)
+
+        # Tính loss cho câu hiện tại
+        sentence_loss = -torch.log(true_probs).sum()  # Tổng loss trên các từ trong câu
+        total_loss += sentence_loss
+
+        # Cập nhật tổng số từ
+        total_words += len(y_true)
+
+    # Tính trung bình trên tất cả các từ
+    loss_Task = total_loss / total_words
 
     return loss_Task
 
