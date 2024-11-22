@@ -41,15 +41,15 @@ def compute_loss_TP(p_tj, true_label):
     return loss_TP / len(true_label)
 
 
-def compute_loss_Task(pi_star_list, y_true_list):
+def compute_loss_Task(pi_star, y_true):
     """
     Compute L_task for a batch with variable-length π* tensors.
 
     Args:
-        pi_star_list (list of torch.Tensor): List of predicted alignment matrices, 
-                                             each of shape (num_words, num_labels).
-        y_true_list (list of torch.Tensor): List of ground truth label indices, 
-                                            each of shape (num_words,).
+        pi_star (list of torch.Tensor): List of predicted alignment matrices,
+                                        each of shape (num_words, num_labels).
+        y_true (list of torch.Tensor): List of ground truth label indices,
+                                       each of shape (num_words,).
 
     Returns:
         torch.Tensor: Scalar loss value.
@@ -59,9 +59,12 @@ def compute_loss_Task(pi_star_list, y_true_list):
 
     epsilon = 1e-12  # Để tránh log(0)
 
-    for pi_star, y_true in zip(pi_star_list, y_true_list):
+    for pi_star_i, y_true_i in zip(pi_star, y_true):
+        # Áp dụng softmax để đảm bảo phân phối xác suất
+        pi_star_i = torch.nn.functional.softmax(pi_star_i, dim=1)
+
         # Lấy xác suất của nhãn đúng từ ma trận π*
-        true_probs = pi_star[torch.arange(len(y_true)), y_true]
+        true_probs = pi_star_i[torch.arange(len(y_true_i)), y_true_i]
 
         # Đảm bảo không có log(0)
         true_probs = torch.clamp(true_probs, min=epsilon)
@@ -71,7 +74,7 @@ def compute_loss_Task(pi_star_list, y_true_list):
         total_loss += sentence_loss
 
         # Cập nhật tổng số từ
-        total_words += len(y_true)
+        total_words += len(y_true_i)
 
     # Tính trung bình trên tất cả các từ
     loss_Task = total_loss / total_words

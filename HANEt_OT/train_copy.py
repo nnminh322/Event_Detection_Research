@@ -128,7 +128,8 @@ def train(local_rank, args):
     model.to(device)
     optimizer = AdamW(
         model.parameters(),
-        lr=args.lr,
+        # lr=args.lr,
+        lr=0.01,
         weight_decay=args.decay,
         eps=args.adamw_eps,
         betas=(0.9, 0.999),
