@@ -55,6 +55,9 @@ class BertED(nn.Module):
         return_dict = {}
         backbone_output = self.backbone(x, attention_mask=masks)
         x, pooled_feat = backbone_output[0], backbone_output[1]
+        print(len(x))
+        for i in range(len(x)):
+            print(f'x[{i}] size: {x[i].size()}')
         context_feature = x.view(-1, x.shape[-1])
         e_cls = x[:, 0, :].clone()
         return_dict["reps"] = e_cls  # reps a.k.a e_cls
