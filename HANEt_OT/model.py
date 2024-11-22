@@ -27,7 +27,7 @@ class BertED(nn.Module):
         self.is_input_mapping = input_map
         self.input_dim = self.backbone.config.hidden_size
         self.labels = labels
-        # self.fc = nn.Linear(self.input_dim, class_num)
+        self.fc = nn.Linear(self.input_dim, class_num)
         if self.is_input_mapping:
             self.map_hidden_dim = 768  # 512 is implemented by the paper
             self.map_input_dim = self.input_dim * 2
@@ -40,10 +40,10 @@ class BertED(nn.Module):
             )
             self.fc = nn.Linear(self.map_hidden_dim, class_num)
 
-        self.label_embeddings = torch.empty(
+        self.label_embeddings = torch.rand(
             [class_num, self.backbone.config.hidden_size], requires_grad=True
         ).to(device)
-        torch.nn.init.xavier_normal_(self.label_embeddings)
+        # torch.nn.init.xavier_normal_(self.label_embeddings)
 
         self.trigger_ffn = nn.Linear(self.backbone.config.hidden_size, 1)
         self.type_ffn = nn.Linear(

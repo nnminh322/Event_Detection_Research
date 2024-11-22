@@ -41,9 +41,12 @@ def compute_loss_TP(p_tj, true_label):
     return loss_TP / len(true_label)
 
 
+import torch
+import torch.nn.functional as F
+
 def compute_loss_Task(pi_star, y_true):
     """
-    Compute L_task for a batch with variable-length π* tensors.
+    Compute binary cross-entropy loss for a batch with variable-length π* tensors.
 
     Args:
         pi_star (list of torch.Tensor): List of predicted alignment matrices,
@@ -55,31 +58,29 @@ def compute_loss_Task(pi_star, y_true):
         torch.Tensor: Scalar loss value.
     """
     total_loss = 0.0
-    total_words = 0  # Tổng số từ trong batch
+    total_words = 0  # Total number of words in the batch
 
-    epsilon = 1e-12  # Để tránh log(0)
+    epsilon = 1e-12  # To avoid log(0)
 
     for pi_star_i, y_true_i in zip(pi_star, y_true):
-        # Áp dụng softmax để đảm bảo phân phối xác suất
+        # Apply softmax to get probabilities (ensuring it's a valid probability distribution)
         pi_star_i = torch.nn.functional.softmax(pi_star_i, dim=1)
+        
+        # Create a binary vector for the true labels (one-hot encoded)
+        y_true_one_hot = torch.zeros_like(pi_star_i)
+        y_true_one_hot[torch.arange(len(y_true_i)), y_true_i] = 1
 
-        # Lấy xác suất của nhãn đúng từ ma trận π*
-        true_probs = pi_star_i[torch.arange(len(y_true_i)), y_true_i]
+        # Compute the binary cross-entropy loss
+        loss = F.binary_cross_entropy(pi_star_i, y_true_one_hot.float(), reduction='sum')
 
-        # Đảm bảo không có log(0)
-        true_probs = torch.clamp(true_probs, min=epsilon)
-
-        # Tính loss cho câu hiện tại
-        sentence_loss = -torch.log(true_probs).sum()  # Tổng loss trên các từ trong câu
-        total_loss += sentence_loss
-
-        # Cập nhật tổng số từ
+        total_loss += loss
         total_words += len(y_true_i)
 
-    # Tính trung bình trên tất cả các từ
+    # Average over all words in the batch
     loss_Task = total_loss / total_words
 
     return loss_Task
+
 
 
 def sinkhorn_pytorch(M, a, b, lambda_sh, numItermax=1000, stopThr=5e-3):
