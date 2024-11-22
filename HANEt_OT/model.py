@@ -40,7 +40,9 @@ class BertED(nn.Module):
             )
             self.fc = nn.Linear(self.map_hidden_dim, class_num)
 
-        self.label_embeddings = torch.empty([class_num,self.backbone.config.hidden_size],requires_grad=True)
+        self.label_embeddings = torch.empty(
+            [class_num, self.backbone.config.hidden_size], requires_grad=True
+        ).to(device)
         torch.nn.init.xavier_normal_(self.label_embeddings)
 
         self.trigger_ffn = nn.Linear(self.backbone.config.hidden_size, 1)
@@ -56,12 +58,11 @@ class BertED(nn.Module):
         context_feature = x.view(-1, x.shape[-1])
         e_cls = x[:, 0, :].clone()
         return_dict["reps"] = e_cls  # reps a.k.a e_cls
-        trigger_feature_order,p_wi_order,D_W_P_order = [],[],[]
+        trigger_feature_order, p_wi_order, D_W_P_order = [], [], []
         if span != None:
-            outputs, trig_feature,order_of_token_follow_span = [], [], []
+            outputs, trig_feature, order_of_token_follow_span = [], [], []
             for i in range(len(span)):
-     
-                
+
                 if self.is_input_mapping:
                     x_cdt = torch.stack(
                         [
@@ -78,16 +79,19 @@ class BertED(nn.Module):
                     ) + torch.index_select(x[i], 0, span[i][:, 1])
                     # x = x_cdt.permute(1, 0, 2)
                 trig_feature.append(opt)
-                span_to_token = torch.tensor(list(dict.fromkeys(span[i].flatten().tolist()))) # flatten and remove duplicate  
+                span_to_token = torch.tensor(
+                    list(dict.fromkeys(span[i].flatten().tolist()))
+                )  # flatten and remove duplicate
                 trigger_feature = opt
-                p_wi_follow_order_span = torch.sigmoid(self.trigger_ffn(trigger_feature)).squeeze(1)
-                D_W_P_follow_order_span = torch.softmax(p_wi_follow_order_span,dim=0)
+                p_wi_follow_order_span = torch.sigmoid(
+                    self.trigger_ffn(trigger_feature)
+                ).squeeze(1)
+                D_W_P_follow_order_span = torch.softmax(p_wi_follow_order_span, dim=0)
                 order_of_token_follow_span.append(span_to_token)
                 trigger_feature_order.append(trigger_feature)
                 p_wi_order.append(p_wi_follow_order_span)
                 D_W_P_order.append(D_W_P_follow_order_span)
 
-        
             # trig_feature = torch.cat(trig_feature)
         # outputs = self.fc(trig_feature)
         # return_dict["outputs"] = outputs
@@ -103,9 +107,8 @@ class BertED(nn.Module):
         #     return_dict["feature_aug"] = feature_aug
         #     return_dict["outputs_aug"] = outputs_aug
 
-
         label_embeddings = self.get_label_embeddings()
-        cost_matrix = compute_cost_transport(trigger_feature_order,label_embeddings)
+        cost_matrix = compute_cost_transport(trigger_feature_order, label_embeddings)
         label_embeddings = label_embeddings.unsqueeze(0).repeat(
             x.size(0), 1, 1
         )  # [Num_label, hidden_size] -> [Batch_size, Num_label, Hidden_size]
@@ -115,31 +118,32 @@ class BertED(nn.Module):
             [label_embeddings, e_cls_repeat_n_class], dim=-1
         )  # Concat in last size dimention
         p_tj = torch.sigmoid(self.type_ffn(concat)).squeeze(-1)
-        D_T_P = torch.softmax(p_tj,dim=-1)
+        D_T_P = torch.softmax(p_tj, dim=-1)
         pi_star = []
         batch_size = len(cost_matrix)
         for i in range(batch_size):
-            pi_star_i = self.OT_layer(cost_matrix[i],D_W_P_order[i].unsqueeze(0), D_T_P[i].unsqueeze(0))
+            pi_star_i = self.OT_layer(
+                cost_matrix[i], D_W_P_order[i].unsqueeze(0), D_T_P[i].unsqueeze(0)
+            )
             pi_star.append(pi_star_i)
-        return_dict['last_hidden_state_order'] = trigger_feature_order
-        return_dict['p_wi_order'] = p_wi_order
-        return_dict['D_W_P_order']=D_W_P_order
-        return_dict['p_tj'] = p_tj
-        return_dict['D_T_P'] = D_T_P
-        return_dict['pi_star'] = pi_star
-        return_dict['cost_matrix'] = cost_matrix
+        return_dict["last_hidden_state_order"] = trigger_feature_order
+        return_dict["p_wi_order"] = p_wi_order
+        return_dict["D_W_P_order"] = D_W_P_order
+        return_dict["p_tj"] = p_tj
+        return_dict["D_T_P"] = D_T_P
+        return_dict["pi_star"] = pi_star
+        return_dict["cost_matrix"] = cost_matrix
 
         # print('----check-sum-p,q=1------')
         # for i in range(len(D_W_P_order)):
         #     print(f'torch.sum(D_W_P_order[{i}]):{torch.sum(D_W_P_order[i])}')
         #     print(f'torch.sum(D_T_P[{i}]):{torch.sum(D_T_P[i])}')
 
-
-
         return return_dict
+
     def get_label_embeddings(self):
         return self.label_embeddings
-    
+
     def forward_backbone(self, x, masks):
         x = self.backbone(x, attention_mask=masks)
         x = x.last_hidden_state

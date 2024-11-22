@@ -42,18 +42,29 @@ def compute_loss_TP(p_tj, true_label):
 
 
 def compute_loss_Task(pi_star, y_true):
-    # print('----in compute_loss_task---')
-    # print(f"Pi_star requires_grad: {pi_star[0].requires_grad}")
-    # print(f"Y_true requires_grad: {y_true[0].requires_grad}")
-    
-    loss_Task = 0.0
-    batch_size = len(pi_star)
-    for i in range(batch_size):
-        sentence_loss = -torch.log(
-            pi_star[i].gather(1, y_true[i].unsqueeze(1))
-        ).sum() / len(pi_star[i])
-        loss_Task += sentence_loss
-    return loss_Task / batch_size
+    """
+    Compute L_task using negative log-likelihood over the predicted alignment matrix π*.
+
+    Args:
+        pi_star (torch.Tensor): Predicted alignment matrix (batch_size, n_labels).
+        y_true (torch.Tensor): Ground truth labels for each word (batch_size,).
+
+    Returns:
+        torch.Tensor: Scalar loss value.
+    """
+    # Lấy xác suất của nhãn đúng từ ma trận π*
+    # torch.gather chọn giá trị tương ứng với y_true dọc theo chiều thứ 1
+    batch_size = pi_star.size(0)
+    true_probs = pi_star.gather(1, y_true.unsqueeze(1)).squeeze(1)  # (batch_size,)
+
+    # Đảm bảo không có log(0) bằng cách thêm epsilon nhỏ
+    epsilon = 1e-12
+    true_probs = torch.clamp(true_probs, min=epsilon)
+
+    # Tính negative log-likelihood loss
+    loss_Task = -torch.log(true_probs).mean()  # Trung bình trên batch size
+
+    return loss_Task
 
 
 def sinkhorn_pytorch(M, a, b, lambda_sh, numItermax=1000, stopThr=5e-3):
