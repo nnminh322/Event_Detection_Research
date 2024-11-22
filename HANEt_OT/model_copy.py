@@ -6,6 +6,7 @@ from configs import parse_arguments
 from torch.nn.utils.rnn import unpad_sequence
 from random import shuffle
 from utils.Optimal_Transport import OptimalTransportLayer
+from utils.tools import *
 
 args = parse_arguments()
 device = torch.device(args.device if torch.cuda.is_available() and args.device != "cpu" else "cpu")  # type: ignore
@@ -21,13 +22,14 @@ class BertED(nn.Module):
                 param.requires_grad = False
         else:
             print("Update bert parameters")
+        self.class_num = class_num
         self.is_input_mapping = input_map
         self.input_dim = self.backbone.config.hidden_size
 
         self.label_embeddings = torch.rand(
             [class_num, self.backbone.config.hidden_size], requires_grad=True
         ).to(device)
-        self.trigger_ffn = nn.Linear(2 * self.backbone.config.hidden_size, 1)
+        self.trigger_ffn = nn.Linear(self.backbone.config.hidden_size, 1)
         self.type_ffn = nn.Linear(
             2 * self.backbone.config.hidden_size, 1
         )  # 2 * Hidden_size -> 1
@@ -40,7 +42,9 @@ class BertED(nn.Module):
         backbone_output = self.backbone(x, attention_mask=masks)
         x, pooled_feat = backbone_output[0], backbone_output[1]
         context_feature = x.view(-1, x.shape[-1])
-        return_dict["reps"] = x[:, 0, :].clone()
+        batch_size = len(x)
+        e_cls = x[:, 0, :].clone()
+        return_dict["reps"] = e_cls
         if span != None:
             outputs, trig_feature = [], []
             for i in range(len(span)):
@@ -55,22 +59,33 @@ class BertED(nn.Module):
                 #     x_cdt = x_cdt.contiguous().view(x_cdt.size(0), x_cdt.size(-1) * 2)
                 #     opt = self.input_map(x_cdt)
                 # else:
-                opt = torch.cat(
-                    [
-                        torch.index_select(x[i], 0, span[i][:, 0]),
-                        torch.index_select(x[i], 0, span[i][:, 1]),
-                    ],
-                    dim=-1,
-                )
+                opt = (
+                    torch.index_select(x[i], 0, span[i][:, 0])
+                    + torch.index_select(x[i], 0, span[i][:, 1])
+                ) / 2
 
                 trig_feature.append(opt)
 
             trig_feature = torch.cat(trig_feature)
         p_wi = torch.sigmoid(self.trigger_ffn(trig_feature))
         D_W_P = torch.softmax(p_wi)
+        concat = torch.cat(
+            [
+                e_cls.squeeze(1).repeat([1, self.class_num, 1]),
+                self.label_embeddings.unsqueeze(0).repeat(batch_size, 1, 1),
+            ],
+            dim=-1,
+        )
 
-        outputs = self.fc(trig_feature)
-        return_dict["outputs"] = outputs
+        p_tj = torch.sigmoid(self.type_ffn(concat))
+        D_T_P = torch.softmax(p_tj)
+
+        cost_matrix = torch.norm(
+            (trig_feature[:, None, :] - self.label_embeddings[None, :, :]), p=2, dim=2
+        )
+        pi_star = self.OT_layer.forward(cost_matrix,r=D_W_P,c=D_T_P)
+        print(pi_star.size())
+
         return_dict["context_feat"] = context_feature
         return_dict["trig_feat"] = trig_feature
         if aug is not None:
