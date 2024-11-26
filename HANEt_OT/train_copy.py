@@ -574,13 +574,14 @@ def train(local_rank, args):
         #                 loss = loss * (1 - w) + (loss_fd + loss_pd) * w
         #             else:
         #                 loss = loss + args.alpha * loss_fd + args.beta * loss_pd
-            
+                # L_task.requires_grad_ = True
                 L_task.backward()
-                
+                print(f'grad: {L_task.grad}')
+                # for i, pi_star_i in enumerate(pi_star):
+                #     print(f"Gradient for pi_star[{i}]:\n{pi_star_i.grad}")  
         #         # L_task.backward()
                 optimizer.step()
-                for param in model.parameters():
-                    print(param.requires_grad)
+
 
         #     logger.info(f"loss_ot: {loss_ot}")
         #     logger.info(f"loss_ucl: {loss_ucl}")
