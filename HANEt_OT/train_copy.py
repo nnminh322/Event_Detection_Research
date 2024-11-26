@@ -326,7 +326,7 @@ def train(local_rank, args):
 
                 L_task = compute_loss_Task(pi_star=pi_star,y_true=train_y)
                 # print('---in L_task---')
-                # print(f'L_task.requires_grad: {L_task.requires_grad}')
+                print(f'L_task.requires_grad in main_copy: {L_task.requires_grad}')
                 # print(f'pi_star.requires_grad: {pi_star.requires_grad}')
                 # print(f'train_y.requires_grad: {train_y.requires_grad}')
 
@@ -576,7 +576,7 @@ def train(local_rank, args):
         #                 loss = loss + args.alpha * loss_fd + args.beta * loss_pd
                 # L_task.requires_grad_ = True
                 L_task.backward()
-                # print(f'grad: {L_task.grad}')
+                print(f'grad: {L_task.grad}')
                 # for i, pi_star_i in enumerate(pi_star):
                 #     print(f"Gradient for pi_star[{i}]:\n{pi_star_i.grad}")  
                 # L_task.backward()

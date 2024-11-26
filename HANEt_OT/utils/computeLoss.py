@@ -65,7 +65,8 @@ def compute_loss_Task(pi_star, y_true):
     for pi_star_i, y_true_i in zip(pi_star, y_true):
         # Apply softmax to get probabilities (ensuring it's a valid probability distribution)
         pi_star_i = torch.nn.functional.softmax(pi_star_i, dim=1)
-        print(f'pi_star_i.requires_grad: {pi_star_i.requires_grad_}')
+        pi_star_i.retain_grad()
+        print(f'pi_star_i.requires_grad: {pi_star_i.requires_grad}')
         # Create a binary vector for the true labels (one-hot encoded)
         y_true_one_hot = torch.zeros_like(pi_star_i)
         y_true_one_hot[torch.arange(len(y_true_i)), y_true_i] = 1
@@ -78,6 +79,8 @@ def compute_loss_Task(pi_star, y_true):
 
     # Average over all words in the batch
     loss_Task = total_loss / total_words
+
+    print(f'loss_Task.requires_grad { loss_Task.requires_grad}')
 
     return loss_Task
 
