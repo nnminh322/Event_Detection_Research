@@ -128,7 +128,7 @@ class BertED(nn.Module):
             pi_star_i = self.OT_layer(
                 cost_matrix[i], D_W_P_order[i].unsqueeze(0), D_T_P[i].unsqueeze(0)
             )
-            print(f'pi_star_[{i}]: {pi_star_i}')
+            pi_star_i.requires_grad(True)
             pi_star.append(pi_star_i)
         return_dict["last_hidden_state_order"] = trigger_feature_order
         return_dict["p_wi_order"] = p_wi_order
