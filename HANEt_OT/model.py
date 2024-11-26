@@ -62,6 +62,22 @@ class BertED(nn.Module):
         e_cls = x[:, 0, :]
         e_cls.retain_grad()  # Retain gradient for non-leaf tensor
 
+        dummy_loss = torch.sum(e_cls)  # Ensure dummy_loss depends on e_cls
+        dummy_loss.backward()  # Backpropagate
+
+        print(f"Gradient của e_cls: {e_cls.grad}")  # Should now have values
+
+
+        # dummy_loss = sum(torch.sum(pi) for pi in pi_star_i)  # Một ví dụ tổng đơn giản
+        # dummy_loss.backward()
+        # dummy_loss = sum(torch.sum(cost) for cost in cost_matrix)  # Một ví dụ tổng đơn giản
+        # dummy_loss.backward()
+        # dummy_loss = sum(torch.sum(cls) for cls in e_cls)  # Một ví dụ tổng đơn giản
+        # dummy_loss.backward()
+        # e_cls.retain_grad()
+        print("Is e_cls part of the computational graph?", e_cls.is_leaf)
+        print("Does dummy_loss require grad?", dummy_loss.requires_grad)
+        print("e_cls grad_fn:", e_cls.grad_fn)
 
 
 
@@ -150,23 +166,7 @@ class BertED(nn.Module):
         print(f"concat.requires_grad: {concat.requires_grad}")
         print(f"label_embeddings.requires_grad: {label_embeddings.requires_grad}")
 
-        dummy_loss = torch.sum(e_cls)  # Ensure dummy_loss depends on e_cls
-        dummy_loss.backward()  # Backpropagate
-
-        print(f"Gradient của e_cls: {e_cls.grad}")  # Should now have values
-
-
-        # dummy_loss = sum(torch.sum(pi) for pi in pi_star_i)  # Một ví dụ tổng đơn giản
-        # dummy_loss.backward()
-        # dummy_loss = sum(torch.sum(cost) for cost in cost_matrix)  # Một ví dụ tổng đơn giản
-        # dummy_loss.backward()
-        # dummy_loss = sum(torch.sum(cls) for cls in e_cls)  # Một ví dụ tổng đơn giản
-        # dummy_loss.backward()
-        # e_cls.retain_grad()
-        print("Is e_cls part of the computational graph?", e_cls.is_leaf)
-        print("Does dummy_loss require grad?", dummy_loss.requires_grad)
-        print("e_cls grad_fn:", e_cls.grad_fn)
-
+    
 
         for i in range(batch_size):
             print(f'cost_matrix[i]: {cost_matrix[i].requires_grad}')
