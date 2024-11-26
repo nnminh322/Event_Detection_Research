@@ -164,7 +164,38 @@ class BertED(nn.Module):
         # for i in range(len(D_W_P_order)):
         #     print(f'torch.sum(D_W_P_order[{i}]):{torch.sum(D_W_P_order[i])}')
         #     print(f'torch.sum(D_T_P[{i}]):{torch.sum(D_T_P[i])}')
+        dummy_loss = torch.sum(e_cls)  # Ensure dummy_loss depends on e_cls
+        dummy_loss.backward()  # Backpropagate
 
+        print(f"Gradient của e_cls: {e_cls.grad}")  # Should now have values
+
+
+        # dummy_loss = sum(torch.sum(pi) for pi in pi_star_i)  # Một ví dụ tổng đơn giản
+        # dummy_loss.backward()
+        # dummy_loss = sum(torch.sum(cost) for cost in cost_matrix)  # Một ví dụ tổng đơn giản
+        # dummy_loss.backward()
+        # dummy_loss = sum(torch.sum(cls) for cls in e_cls)  # Một ví dụ tổng đơn giản
+        # dummy_loss.backward()
+        # e_cls.retain_grad()
+        print("Is e_cls part of the computational graph?", e_cls.is_leaf)
+        print("Does dummy_loss require grad?", dummy_loss.requires_grad)
+        print("e_cls grad_fn:", e_cls.grad_fn)
+
+
+
+        # dummy_loss = label_embeddings.sum()  # Một ví dụ tổng đơn giản
+        # dummy_loss.backward()
+        # label_embeddings.retain_grad()
+        # Kiểm tra gradient
+        # for i, pi in enumerate(pi_star):
+        #     print(f"Gradient của pi[{i}]: {pi.grad}")
+        # for i, cost in enumerate(cost_matrix):
+        #     print(f"Gradient của cost[{i}]: {cost.grad}")
+        for i, cls in enumerate(e_cls):
+            print(f"Gradient của cls[{i}]: {cls.grad}")
+        # for i, lb in enumerate(label_embeddings):
+        # print(f"Gradient của LB]: {label_embeddings.grad}")
+        print(f'e_cls.requires_grad: {e_cls.requires_grad}')
         return return_dict
 
     def get_label_embeddings(self):
