@@ -6,7 +6,7 @@ from torch.nn.functional import normalize
 from torch.optim import AdamW
 from utils import *
 from configs import parse_arguments
-from model_copy import BertED
+from model import BertED
 from tqdm import tqdm
 from exemplars import Exemplars
 from copy import deepcopy
@@ -275,89 +275,89 @@ def train(local_rank, args):
                 #
                 return_dict = model(train_x, train_masks, train_span)
 
-        #         outputs, context_feat, trig_feat = (
-        #             return_dict["outputs"],
-        #             return_dict["context_feat"],
-        #             return_dict["trig_feat"],
-        #         )
-        #         # print("trigg------")
-        #         # print(len(trig_feat))
-        #         # print(trig_feat)
-        #         # print("reps----")
-        #         # print(len(return_dict["reps"]))
-        #         # print(return_dict["reps"])
+                outputs, context_feat, trig_feat = (
+                    return_dict["outputs"],
+                    return_dict["context_feat"],
+                    return_dict["trig_feat"],
+                )
+                # print("trigg------")
+                # print(len(trig_feat))
+                # print(trig_feat)
+                # print("reps----")
+                # print(len(return_dict["reps"]))
+                # print(return_dict["reps"])
 
-        #         # pi_star = compute_optimal_transport(D_W_P, D_T_P, C, epsilon=epsilon)
-        #         # print(f"truoc khi mask {train_y}")
-        #         # print(learned_types)
-        #         for i in range(len(train_y)):
-        #             invalid_mask_label = torch.BoolTensor(
-        #                 [item not in learned_types for item in train_y[i]]
-        #             ).to(device)
-        #             train_y[i].masked_fill_(invalid_mask_label, 0)
+                # pi_star = compute_optimal_transport(D_W_P, D_T_P, C, epsilon=epsilon)
+                # print(f"truoc khi mask {train_y}")
+                # print(learned_types)
+                for i in range(len(train_y)):
+                    invalid_mask_label = torch.BoolTensor(
+                        [item not in learned_types for item in train_y[i]]
+                    ).to(device)
+                    train_y[i].masked_fill_(invalid_mask_label, 0)
 
-        #         # print('mask_label: ')
-        #         # print(invalid_mask_label)
-        #         # print(train_y)
-        #         true_trig, true_label_onehot = get_true_y(train_y)
+                # print('mask_label: ')
+                # print(invalid_mask_label)
+                # print(train_y)
+                true_trig, true_label_onehot = get_true_y(train_y)
 
-        #         p_wi_order = return_dict["p_wi_order"]
-        #         p_tj = return_dict["p_tj"]
-        #         D_W_P_order = return_dict['D_W_P_order']
-        #         D_T_P = return_dict['D_T_P']
-        #         # print(f'p_wi_order: {p_wi_order}')
-        #         # print(f'true_trig: {true_trig}')
-        #         loss_TI = compute_loss_TI(p_wi=p_wi_order,true_y=true_trig)
-        #         # print(f'loss_TI {loss_TI}')
-        #         # print(f'true_label_onehot: {true_label_onehot}')
-        #         loss_TP = compute_loss_TP(p_tj=p_tj, true_label=true_label_onehot)
+                p_wi_order = return_dict["p_wi_order"]
+                p_tj = return_dict["p_tj"]
+                D_W_P_order = return_dict['D_W_P_order']
+                D_T_P = return_dict['D_T_P']
+                # print(f'p_wi_order: {p_wi_order}')
+                # print(f'true_trig: {true_trig}')
+                loss_TI = compute_loss_TI(p_wi=p_wi_order,true_y=true_trig)
+                # print(f'loss_TI {loss_TI}')
+                # print(f'true_label_onehot: {true_label_onehot}')
+                loss_TP = compute_loss_TP(p_tj=p_tj, true_label=true_label_onehot)
 
-        #         last_hidden_state_order = return_dict['last_hidden_state_order']
-        #         label_embeddings = model.get_label_embeddings()
-        #         # print(f'size of last_hidden_state: {last_hidden_state}')
-        #         # print(last_hidden_state)
-        #         # cost_matrix = compute_cost_transport(last_hidden_state_order=last_hidden_state_order,label_embeddings=label_embeddings)
-        #         # print(f'cost_matrix[0].requires_grad: {cost_matrix[0].requires_grad}')
-        #         cost_matrix = return_dict['cost_matrix']
-        #         # print(f'C size: {C.size()}')
-        #         # pi_star = compute_optimal_transport_plane_for_batch(D_W_P_order=D_W_P_order,D_T_P=D_T_P,cost_matrix=cost_matrix)
-        #         # print(f'size of pi_star: {pi_star.size()}')
-        #         pi_star = return_dict['pi_star']
+                last_hidden_state_order = return_dict['last_hidden_state_order']
+                label_embeddings = model.get_label_embeddings()
+                # print(f'size of last_hidden_state: {last_hidden_state}')
+                # print(last_hidden_state)
+                # cost_matrix = compute_cost_transport(last_hidden_state_order=last_hidden_state_order,label_embeddings=label_embeddings)
+                # print(f'cost_matrix[0].requires_grad: {cost_matrix[0].requires_grad}')
+                cost_matrix = return_dict['cost_matrix']
+                # print(f'C size: {C.size()}')
+                # pi_star = compute_optimal_transport_plane_for_batch(D_W_P_order=D_W_P_order,D_T_P=D_T_P,cost_matrix=cost_matrix)
+                # print(f'size of pi_star: {pi_star.size()}')
+                pi_star = return_dict['pi_star']
 
-        #         L_task = compute_loss_Task(pi_star=pi_star,y_true=train_y)
-        #         # print('---in L_task---')
-        #         # print(f'L_task.requires_grad: {L_task.requires_grad}')
-        #         # print(f'pi_star.requires_grad: {pi_star.requires_grad}')
-        #         # print(f'train_y.requires_grad: {train_y.requires_grad}')
+                L_task = compute_loss_Task(pi_star=pi_star,y_true=train_y)
+                # print('---in L_task---')
+                # print(f'L_task.requires_grad: {L_task.requires_grad}')
+                # print(f'pi_star.requires_grad: {pi_star.requires_grad}')
+                # print(f'train_y.requires_grad: {train_y.requires_grad}')
 
 
-        #         # print(f'L_task: {L_task}')
-        #         # print(f'true_label size: {true_label.size()}')
-        #         # Tính L_task: Negative Log-Likelihood Loss
-        #         # print(f'train_y[2]: {train_y[2]}') 
-        #         pi_g = get_pi_g(y_true=train_y)
-        #         # print(f'pi_g[2]: {pi_g[2]}')
-        #         # print(f'pi_star[2]: {pi_star[2]}')
-        #         # print(f'cost[2]: {cost_matrix[2]}')
-        #         Dist_pi_star = compute_Dist_pi_star(pi_star=pi_star,cost_matrix=cost_matrix)
-        #         Dist_pi_g = compute_Dist_pi_g(pi_g=pi_g,cost_matrix=cost_matrix)
-        #         L_OT = compute_loss_OT(Dist_pi_star,Dist_pi_g)
-        #         alpha_task = 1.0
-        #         alpha_OT = 0.01
-        #         alpha_LT_I = 0.05
-        #         alpha_LT_P = 0.01
-        #         loss_ot = (
-        #             alpha_task * L_task
-        #             + alpha_OT * L_OT
-        #             + alpha_LT_I * loss_TI
-        #             + alpha_LT_P * loss_TP
-        #         )
+                # print(f'L_task: {L_task}')
+                # print(f'true_label size: {true_label.size()}')
+                # Tính L_task: Negative Log-Likelihood Loss
+                # print(f'train_y[2]: {train_y[2]}') 
+                pi_g = get_pi_g(y_true=train_y)
+                # print(f'pi_g[2]: {pi_g[2]}')
+                # print(f'pi_star[2]: {pi_star[2]}')
+                # print(f'cost[2]: {cost_matrix[2]}')
+                Dist_pi_star = compute_Dist_pi_star(pi_star=pi_star,cost_matrix=cost_matrix)
+                Dist_pi_g = compute_Dist_pi_g(pi_g=pi_g,cost_matrix=cost_matrix)
+                L_OT = compute_loss_OT(Dist_pi_star,Dist_pi_g)
+                alpha_task = 1.0
+                alpha_OT = 0.01
+                alpha_LT_I = 0.05
+                alpha_LT_P = 0.01
+                loss_ot = (
+                    alpha_task * L_task
+                    + alpha_OT * L_OT
+                    + alpha_LT_I * loss_TI
+                    + alpha_LT_P * loss_TP
+                )
 
-        #         # print(f"task {L_task}")
-        #         # print(f"OT: {L_OT}")
-        #         # print(f"TI {loss_TI}")
-        #         # print(f"TP {loss_TP}")
-        #         # print(f"loss_ot {loss_ot}")
+                # print(f"task {L_task}")
+                # print(f"OT: {L_OT}")
+                # print(f"TI {loss_TI}")
+                # print(f"TP {loss_TP}")
+                # print(f"loss_ot {loss_ot}")
 
         #         loss, loss_ucl, loss_aug, loss_fd, loss_pd, loss_tlcl = 0, 0, 0, 0, 0, 0
         #         # ce_y = torch.cat(train_y)
@@ -575,9 +575,9 @@ def train(local_rank, args):
         #             else:
         #                 loss = loss + args.alpha * loss_fd + args.beta * loss_pd
             
-        #         loss.backward()
+                loss_ot.backward()
         #         # L_task.backward()
-        #         optimizer.step()
+                optimizer.step()
 
         #     logger.info(f"loss_ot: {loss_ot}")
         #     logger.info(f"loss_ucl: {loss_ucl}")
