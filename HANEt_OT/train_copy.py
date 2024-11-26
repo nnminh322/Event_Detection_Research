@@ -354,10 +354,10 @@ def train(local_rank, args):
                 )
 
                 print(f"task {L_task}")
-                print(f"OT: {L_OT}")
-                print(f"TI {loss_TI}")
-                print(f"TP {loss_TP}")
-                print(f"loss_ot {loss_ot}")
+                # print(f"OT: {L_OT}")
+                # print(f"TI {loss_TI}")
+                # print(f"TP {loss_TP}")
+                # print(f"loss_ot {loss_ot}")
 
         #         loss, loss_ucl, loss_aug, loss_fd, loss_pd, loss_tlcl = 0, 0, 0, 0, 0, 0
         #         # ce_y = torch.cat(train_y)
@@ -579,6 +579,13 @@ def train(local_rank, args):
                 print(f'grad: {L_task.grad}')
                 for i, pi_star_i in enumerate(pi_star):
                     print(f"Gradient for pi_star[{i}]:\n{pi_star_i.grad}")  
+                print(f'grad: {L_task.grad}')
+                for i, cost in enumerate(cost_matrix):
+                    print(f"Gradient for cost[{i}]:\n{cost.grad}")  
+                for i, dw in enumerate(D_W_P_order):
+                    print(f"Gradient for dw[{i}]:\n{dw.grad}")  
+                for i, dt in enumerate(D_T_P):
+                    print(f"Gradient for dt[{i}]:\n{dt.grad}")  
                 # L_task.backward()
                 optimizer.step()
 
