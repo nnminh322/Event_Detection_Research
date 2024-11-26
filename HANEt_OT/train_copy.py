@@ -353,11 +353,11 @@ def train(local_rank, args):
                     + alpha_LT_P * loss_TP
                 )
 
-                # print(f"task {L_task}")
-                # print(f"OT: {L_OT}")
-                # print(f"TI {loss_TI}")
-                # print(f"TP {loss_TP}")
-                # print(f"loss_ot {loss_ot}")
+                print(f"task {L_task}")
+                print(f"OT: {L_OT}")
+                print(f"TI {loss_TI}")
+                print(f"TP {loss_TP}")
+                print(f"loss_ot {loss_ot}")
 
         #         loss, loss_ucl, loss_aug, loss_fd, loss_pd, loss_tlcl = 0, 0, 0, 0, 0, 0
         #         # ce_y = torch.cat(train_y)
