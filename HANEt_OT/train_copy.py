@@ -575,10 +575,10 @@ def train(local_rank, args):
         #             else:
         #                 loss = loss + args.alpha * loss_fd + args.beta * loss_pd
                 # L_task.requires_grad_ = True
-                # L_task.backward()
+                L_task.backward()
                 print(f'grad: {L_task.grad}')
-                # for i, pi_star_i in enumerate(pi_star):
-                #     print(f"Gradient for pi_star[{i}]:\n{pi_star_i.grad}")  
+                for i, pi_star_i in enumerate(pi_star):
+                    print(f"Gradient for pi_star[{i}]:\n{pi_star_i.grad}")  
                 # L_task.backward()
                 optimizer.step()
 
