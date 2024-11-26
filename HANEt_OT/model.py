@@ -125,11 +125,21 @@ class BertED(nn.Module):
         pi_star = []
         batch_size = len(cost_matrix)
         for i in range(batch_size):
+            print(f'cost_matrix[i]: {cost_matrix[i].requires_grad}')
+            print(f'D_W_P_order[i]: {D_W_P_order[i].requires_grad}')
+            print(f'cost_matrix[i]: {D_T_P[i].requires_grad}')
             pi_star_i = self.OT_layer(
                 cost_matrix[i], D_W_P_order[i].unsqueeze(0), D_T_P[i].unsqueeze(0)
             )
+            
             pi_star_i.requires_grad_ = True
             pi_star.append(pi_star_i)
+        dummy_loss = sum(torch.sum(cost) for cost in cost_matrix)  # Một ví dụ tổng đơn giản
+        dummy_loss.backward()
+
+        # Kiểm tra gradient
+        for i, cost in enumerate(cost_matrix):
+            print(f"Gradient của cost[{i}]: {cost.grad}")
         return_dict["last_hidden_state_order"] = trigger_feature_order
         return_dict["p_wi_order"] = p_wi_order
         return_dict["D_W_P_order"] = D_W_P_order

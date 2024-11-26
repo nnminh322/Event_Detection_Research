@@ -85,6 +85,36 @@ def compute_loss_Task(pi_star, y_true):
     return loss_Task
 
 
+def compute_loss_Task_check_grad(pi_star, y_true):
+    """
+    Compute binary cross-entropy loss for a batch using PyTorch's built-in loss functions.
+
+    Args:
+        pi_star (list of torch.Tensor): List of predicted alignment matrices,
+                                        each of shape (num_words, num_labels).
+        y_true (list of torch.Tensor): List of ground truth label indices,
+                                       each of shape (num_words,).
+
+    Returns:
+        torch.Tensor: Scalar loss value.
+    """
+    # Initialize the loss function
+    bce_loss_fn = torch.nn.CrossEntropyLoss(reduction='sum')
+    
+    total_loss = 0.0
+    total_words = 0  # Total number of words in the batch
+
+    for pi_star_i, y_true_i in zip(pi_star, y_true):
+        # Compute CrossEntropyLoss directly (includes softmax + log probabilities internally)
+        loss = bce_loss_fn(pi_star_i, y_true_i)
+        
+        total_loss += loss
+        total_words += len(y_true_i)
+
+    # Average over all words in the batch
+    loss_Task = total_loss / total_words
+    return loss_Task
+
 
 def sinkhorn_pytorch(M, a, b, lambda_sh, numItermax=1000, stopThr=5e-3):
     u = torch.ones_like(a) / a.size(0)
