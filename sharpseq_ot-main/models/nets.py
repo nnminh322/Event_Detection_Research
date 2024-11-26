@@ -193,7 +193,7 @@ class lm_ot(torch.nn.Module):
         scores = torch.matmul(topics, vocab.T)
         return 1-scores
     
-    def ot_loss(self, topics, vocabs, nslots, verbs):
+    def ot_loss(self, topics, vocabs, nslots, verbs): 
         m = self.get_m(nslots-1, verbs)
         loss = 0
         bach_size = 1024

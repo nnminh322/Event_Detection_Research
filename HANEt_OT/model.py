@@ -40,7 +40,7 @@ class BertED(nn.Module):
             )
             self.fc = nn.Linear(self.map_hidden_dim, class_num)
 
-        self.label_embeddings = torch.rand(
+        self.label_embeddings = torch.ones(
             [class_num, self.backbone.config.hidden_size], requires_grad=True
         ).to(device)
         # torch.nn.init.xavier_normal_(self.label_embeddings)

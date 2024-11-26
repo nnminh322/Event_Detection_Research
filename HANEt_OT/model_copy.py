@@ -46,7 +46,7 @@ class BertED(nn.Module):
         e_cls = x[:, 0, :].clone()
         return_dict["reps"] = e_cls
         if span != None:
-            outputs, trig_feature = [], []
+            outputs, trig_feature, p_wi,p_tj, D_W_P, = [], []
             for i in range(len(span)):
                 # if self.is_input_mapping:
                 #     x_cdt = torch.stack(
@@ -65,26 +65,31 @@ class BertED(nn.Module):
                 ) / 2
 
                 trig_feature.append(opt)
+                p_wi = torch.sigmoid(self.trigger_ffn(trig_feature))
+                D_W_P = torch.softmax(p_wi,dim=-1)
+                concat = torch.cat(
+                    [
+                        e_cls.unsqueeze(1).repeat([1, self.class_num, 1]),
+                        self.label_embeddings.unsqueeze(0).repeat(batch_size, 1, 1),
+                    ],
+                    dim=-1,
+                )
+
+                p_tj = torch.sigmoid(self.type_ffn(concat))
+                D_T_P = torch.softmax(p_tj,dim=-1)
+
+                cost_matrix = torch.norm(
+                    (trig_feature[:, None, :] - self.label_embeddings[None, :, :]), p=2, dim=2
+                )
 
             trig_feature = torch.cat(trig_feature)
-        p_wi = torch.sigmoid(self.trigger_ffn(trig_feature))
-        D_W_P = torch.softmax(p_wi)
-        concat = torch.cat(
-            [
-                e_cls.squeeze(1).repeat([1, self.class_num, 1]),
-                self.label_embeddings.unsqueeze(0).repeat(batch_size, 1, 1),
-            ],
-            dim=-1,
-        )
+        
 
-        p_tj = torch.sigmoid(self.type_ffn(concat))
-        D_T_P = torch.softmax(p_tj)
-
-        cost_matrix = torch.norm(
-            (trig_feature[:, None, :] - self.label_embeddings[None, :, :]), p=2, dim=2
-        )
-        pi_star = self.OT_layer.forward(cost_matrix,r=D_W_P,c=D_T_P)
-        print(pi_star.size())
+        print(f'size of cost_matrix: {cost_matrix.size()}')
+        print(f'size of D_W_P: {D_W_P.size()}')
+        print(f'size of D_T_P: {D_T_P.size()}')
+        # pi_star = self.OT_layer.forward(cost_matrix,r=D_W_P,c=D_T_P)
+        # print(pi_star.size())
 
         return_dict["context_feat"] = context_feature
         return_dict["trig_feat"] = trig_feature
