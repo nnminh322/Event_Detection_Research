@@ -129,7 +129,7 @@ def train(local_rank, args):
     optimizer = AdamW(
         model.parameters(),
         # lr=args.lr,
-        lr=0.005,
+        lr=0.01,
         weight_decay=args.decay,
         eps=args.adamw_eps,
         betas=(0.9, 0.999),
