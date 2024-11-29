@@ -576,6 +576,7 @@ def train(local_rank, args):
         #                 loss = loss + args.alpha * loss_fd + args.beta * loss_pd
                 # L_task.requires_grad_ = True
                 L_task.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                 print(f'grad: {L_task.grad}')
                 for i, pi_star_i in enumerate(pi_star):
                     print(f"Gradient for pi_star[{i}]:\n{pi_star_i.grad}")  
