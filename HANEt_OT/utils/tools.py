@@ -235,6 +235,22 @@ def compute_cost_transport(
         cost_matrix.append(cost)
     return cost_matrix
 
+def compute_cost_transport_euclide(
+    last_hidden_state_order, label_embeddings, num_classes=args.class_num + 1
+):
+    # last_hidden_state_order: [batch_size, num_span, hidden_dim]
+    # label_embedding: [num_class, hidden_dim]
+
+    batch_size = len(last_hidden_state_order)
+    cost_matrix = []
+    for i in range(batch_size):
+        # Tính khoảng cách Euclid sử dụng torch.cdist
+        cost = torch.cdist(
+            last_hidden_state_order[i], label_embeddings, p=2
+        )  # p=2 tương ứng với Euclid
+        cost_matrix.append(cost)
+    return cost_matrix
+
 
 def compute_optimal_transport_plane_for_batch(D_W_P_order, D_T_P, cost_matrix):
     # cost_matrix = [c.detach() for c in cost_matrix]

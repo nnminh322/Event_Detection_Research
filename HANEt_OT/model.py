@@ -110,7 +110,7 @@ class BertED(nn.Module):
             return_dict["outputs_aug"] = outputs_aug
 
         label_embeddings = self.get_label_embeddings()
-        cost_matrix = compute_cost_transport(trigger_feature_order, label_embeddings)
+        cost_matrix = compute_cost_transport_euclide(trigger_feature_order, label_embeddings)
         label_embeddings = label_embeddings.unsqueeze(0).repeat(
             x.size(0), 1, 1
         )  # [Num_label, hidden_size] -> [Batch_size, Num_label, Hidden_size]
