@@ -262,6 +262,9 @@ def compute_optimal_transport_plane_for_batch(D_W_P_order, D_T_P, cost_matrix):
     batch_size = len(D_W_P_order)
     pi_star_matrix = []
     for sentence in range(batch_size):
+        print(f'D_W_P_order[{sentence}]: {D_W_P_order[sentence]}')
+        print(f'D_T_P[{sentence}]: {D_T_P[sentence]}')
+        print(f'cost_matrix[{sentence}]: {cost_matrix[sentence]}')
         pi_i = sinkhorn_pytorch_for_1_sentence(
             D_W_P_order[sentence], D_T_P[sentence], cost_matrix[sentence]
         )
