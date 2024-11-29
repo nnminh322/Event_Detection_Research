@@ -324,7 +324,7 @@ def train(local_rank, args):
                 # print(f'size of pi_star: {pi_star.size()}')
                 pi_star = return_dict['pi_star']
 
-                L_task = compute_loss_Task(pi_star=pi_star,y_true=train_y)
+                L_task = compute_loss_Task_check_grad(pi_star=pi_star,y_true=train_y)
                 # print('---in L_task---')
                 print(f'L_task.requires_grad in main_copy: {L_task.requires_grad}')
                 # print(f'pi_star.requires_grad: {pi_star.requires_grad}')

@@ -40,7 +40,7 @@ class BertED(nn.Module):
             )
             self.fc = nn.Linear(self.map_hidden_dim, class_num)
 
-        self.label_embeddings = torch.ones(
+        self.label_embeddings = torch.rand(
             [class_num, self.backbone.config.hidden_size], requires_grad=True
         ).to(device)
         # torch.nn.init.xavier_normal_(self.label_embeddings)
@@ -141,7 +141,6 @@ class BertED(nn.Module):
             pi_star_i.requires_grad_ = True
             pi_star.append(pi_star_i)
 
-
         print(pi_star[1].grad)
         return_dict["last_hidden_state_order"] = trigger_feature_order
         return_dict["p_wi_order"] = p_wi_order
@@ -151,7 +150,6 @@ class BertED(nn.Module):
         return_dict["pi_star"] = pi_star
         return_dict["cost_matrix"] = cost_matrix
 
-        
         return return_dict
 
     def get_label_embeddings(self):
