@@ -141,7 +141,7 @@ class BertED(nn.Module):
             pi_star_i.requires_grad_ = True
             pi_star.append(pi_star_i)
 
-        print(pi_star[1].grad)
+        # print(pi_star[1].grad)
         return_dict["last_hidden_state_order"] = trigger_feature_order
         return_dict["p_wi_order"] = p_wi_order
         return_dict["D_W_P_order"] = D_W_P_order

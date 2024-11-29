@@ -105,6 +105,8 @@ def compute_loss_Task_check_grad(pi_star, y_true):
     total_words = 0  # Total number of words in the batch
 
     for pi_star_i, y_true_i in zip(pi_star, y_true):
+        print(f'pi_star_{i}: {pi_star_i}')
+        print(f'y_true_{i}: {y_true_i}')
         # Compute CrossEntropyLoss directly (includes softmax + log probabilities internally)
         loss = bce_loss_fn(pi_star_i, y_true_i)
         
