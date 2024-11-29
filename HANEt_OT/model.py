@@ -55,6 +55,7 @@ class BertED(nn.Module):
         return_dict = {}
         backbone_output = self.backbone(x, attention_mask=masks)
         x, pooled_feat = backbone_output[0], backbone_output[1]
+        # x = self.layer_norm
         context_feature = x.view(-1, x.shape[-1])
         e_cls = x[:, 0, :]
         e_cls.retain_grad()  # Retain gradient for non-leaf tensor
@@ -134,6 +135,9 @@ class BertED(nn.Module):
             cost_matrix[i].retain_grad()
             D_W_P_order[i].retain_grad()
             D_T_P[i].retain_grad()
+            print(f'D_W_P_order[{i}]: {D_W_P_order[i]}')
+            print(f'D_T_P[{i}]: {D_T_P[i]}')
+            print(f'cost_matrix[{i}]: {cost_matrix[i]}')
             pi_star_i = self.OT_layer(
                 cost_matrix[i], D_W_P_order[i].unsqueeze(0), D_T_P[i].unsqueeze(0)
             )
