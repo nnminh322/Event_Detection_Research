@@ -111,7 +111,7 @@ class OptimalTransportFcn(torch.autograd.Function):
     """
 
     @staticmethod
-    def forward(ctx, M, r=None, c=None, gamma=1.0, eps=1.0e-6, maxiters=1000, logspace=False, method='block'):
+    def forward(ctx, M, r=None, c=None, gamma=1.0, eps=1.0e-6, maxiters=1000, logspace=False, method='approx'):
         """Solve optimal transport using skinhorn. Method can be 'block', 'full', 'fullchol' or 'approx'."""
         assert method in ('block', 'full', 'fullchol', 'approx')
 
