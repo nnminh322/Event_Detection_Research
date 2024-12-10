@@ -44,6 +44,49 @@ def compute_loss_TP(p_tj, true_label):
 import torch
 import torch.nn.functional as F
 
+def compute_loss_Task_idk(pi_star, y_true):
+    """
+    Compute binary cross-entropy loss for a batch with variable-length π* tensors.
+
+    Args:
+        pi_star (list of torch.Tensor): List of predicted alignment matrices,
+                                        each of shape (num_words, num_labels).
+        y_true (list of torch.Tensor): List of ground truth label indices,
+                                       each of shape (num_words,).
+
+    Returns:
+        torch.Tensor: Scalar loss value.
+    """
+    total_loss = 0.0
+    total_words = 0  # Total number of words in the batch
+
+    epsilon = 1e-12  # To avoid log(0)
+
+    for pi_star_i, y_true_i in zip(pi_star, y_true):
+        # Apply softmax to get probabilities
+        pi_star_i = F.softmax(pi_star_i, dim=1)
+        
+        # Create a binary one-hot encoded vector for true labels
+        y_true_one_hot = torch.zeros_like(pi_star_i)
+        y_true_one_hot[torch.arange(len(y_true_i)), y_true_i] = 1
+
+        # Compute BCE manually for each word-label pair
+        bce_loss = -(
+            y_true_one_hot * torch.log(pi_star_i + epsilon) +
+            (1 - y_true_one_hot) * torch.log(1 - pi_star_i + epsilon)
+        )
+
+        # Sum up the loss for all words in this sentence
+        total_loss += bce_loss.sum()
+        total_words += len(y_true_i)
+
+    # Average over all words in the batch
+    loss_Task = total_loss / total_words
+
+    print(f'loss_Task.requires_grad: {loss_Task.requires_grad}')
+
+    return loss_Task
+
 def compute_loss_Task(pi_star, y_true):
     """
     Compute binary cross-entropy loss for a batch with variable-length π* tensors.

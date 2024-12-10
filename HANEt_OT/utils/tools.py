@@ -262,9 +262,7 @@ def compute_optimal_transport_plane_for_batch(D_W_P_order, D_T_P, cost_matrix):
     batch_size = len(D_W_P_order)
     pi_star_matrix = []
     for sentence in range(batch_size):
-        print(f'D_W_P_order[{sentence}]: {D_W_P_order[sentence]}')
-        print(f'D_T_P[{sentence}]: {D_T_P[sentence]}')
-        print(f'cost_matrix[{sentence}]: {cost_matrix[sentence]}')
+
         pi_i = sinkhorn_pytorch_for_1_sentence(
             D_W_P_order[sentence], D_T_P[sentence], cost_matrix[sentence]
         )
@@ -314,3 +312,28 @@ def get_y_pred(pi_star):
         y_pred.append(y_pred_i)
 
     return y_pred
+
+def sinkhorn(cost_matrix, r, c, epsilon=0.1, max_iter=1000):
+    """
+    Compute Sinkhorn transport plan using iterative scaling.
+
+    Args:
+        cost_matrix (torch.Tensor): Cost matrix (num_rows, num_cols).
+        r (torch.Tensor): Row distribution (num_rows,).
+        c (torch.Tensor): Column distribution (num_cols,).
+        epsilon (float): Regularization parameter.
+        max_iter (int): Maximum number of iterations.
+
+    Returns:
+        torch.Tensor: Optimal transport plan (pi_star).
+    """
+    K = torch.exp(-cost_matrix / epsilon)
+    u = torch.ones_like(r, requires_grad=False)
+    v = torch.ones_like(c, requires_grad=False)
+
+    for _ in range(max_iter):
+        u = r / (K @ v)
+        v = c / (K.T @ u)
+
+    pi_star = torch.diag(u) @ K @ torch.diag(v)
+    return pi_star
