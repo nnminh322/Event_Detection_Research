@@ -126,6 +126,7 @@ class BertED(nn.Module):
         p_tj = torch.sigmoid(self.type_ffn(concat)).squeeze(-1)
 
         D_T_P = torch.softmax(p_tj, dim=-1)
+        D_T_P.retain_grad()
 
         pi_star = []
         batch_size = len(cost_matrix)
