@@ -131,7 +131,7 @@ def compute_loss_Task(pi_star, y_true):
 def compute_loss_Task_check_grad(pi_star_list, y_true):
     loss_fn = torch.nn.BCEWithLogitsLoss()
     total_loss = 0.0
-    num_classes = pi_star_list.size(-1)
+    num_classes = pi_star_list[0].size(-1)
     for i in range(pi_star_list.size(0)):
         y_true_i = torch.nn.functional.one_hot(y_true[i],num_classes=num_classes).float()
         pi_star_i = pi_star_list[i].float()
