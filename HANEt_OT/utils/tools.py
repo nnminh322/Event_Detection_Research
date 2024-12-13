@@ -188,6 +188,51 @@ def sinkhorn_pytorch_for_1_sentence(
     return pi
 
 
+
+def sinkhorn_pytorch(M, a, b, lambda_sh, numItermax=1000, stopThr=5e-3):
+    # Khởi tạo u và v, với u là vector phân phối đều ban đầu
+    u = torch.ones_like(a) / a.size(0)
+    v = torch.ones_like(b) / b.size(0)
+
+    # Tính toán ma trận K
+    K = torch.exp(-M * lambda_sh)
+
+    # Khởi tạo biến đếm và lỗi ban đầu
+    cpt = 0
+    err = 1.0
+
+    # Điều kiện dừng
+    def condition(cpt, u, v, err):
+        return cpt < numItermax and err > stopThr
+
+    # Cập nhật u và v
+    def v_update(u, v):
+        epsilon = 1e-5  # Giá trị nhỏ để tránh chia cho 0
+        u = a / (torch.matmul(K, v) + epsilon)
+        v = b / (torch.matmul(K.t(), u) + epsilon)
+
+        return u, v
+
+    # Hàm tính lỗi
+    def err_f(K, u, v):
+        # Tính sai số theo công thức L2 norm
+        bb = v * torch.matmul(K.t(), u)
+        err = torch.norm(torch.sum(torch.abs(bb - b), dim=0), p=float('inf'))
+        return err
+
+    # Hàm vòng lặp cập nhật
+    while condition(cpt, u, v, err):
+        u, v = v_update(u, v)  # Cập nhật u và v
+        err = err_f(K, u, v)  # Tính toán lỗi
+
+        cpt += 1
+
+    # Tính toán ma trận pi_star
+    pi_star = torch.diag(u) @ K @ torch.diag(v)
+    
+    return pi_star
+
+
 def get_true_y(
     y,
     num_classes=args.class_num + 1,
