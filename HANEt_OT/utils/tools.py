@@ -188,7 +188,6 @@ def sinkhorn_pytorch_for_1_sentence(
     return pi
 
 
-
 def sinkhorn_pytorch(M, a, b, lambda_sh=20, numItermax=1000, stopThr=5e-3):
     # Khởi tạo u và v, với u là vector phân phối đều ban đầu
     u = torch.ones_like(a) / a.size(0)
@@ -217,7 +216,7 @@ def sinkhorn_pytorch(M, a, b, lambda_sh=20, numItermax=1000, stopThr=5e-3):
     def err_f(K, u, v):
         # Tính sai số theo công thức L2 norm
         bb = v * torch.matmul(K.t(), u)
-        err = torch.norm(torch.sum(torch.abs(bb - b), dim=0), p=float('inf'))
+        err = torch.norm(torch.sum(torch.abs(bb - b), dim=0), p=float("inf"))
         return err
 
     # Hàm vòng lặp cập nhật
@@ -229,7 +228,7 @@ def sinkhorn_pytorch(M, a, b, lambda_sh=20, numItermax=1000, stopThr=5e-3):
 
     # Tính toán ma trận pi_star
     pi_star = torch.diag(u) @ K @ torch.diag(v)
-    
+    pi_star = pi_star / pi_star.sum(dim=-1, keepdim=True)
     return pi_star
 
 
@@ -279,6 +278,7 @@ def compute_cost_transport(
         )
         cost_matrix.append(cost)
     return cost_matrix
+
 
 def compute_cost_transport_euclide(
     last_hidden_state_order, label_embeddings, num_classes=args.class_num + 1
@@ -357,6 +357,7 @@ def get_y_pred(pi_star):
         y_pred.append(y_pred_i)
 
     return y_pred
+
 
 def sinkhorn(cost_matrix, r, c, epsilon=0.1, max_iter=1000):
     """
