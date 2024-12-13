@@ -135,11 +135,12 @@ class BertED(nn.Module):
             cost_matrix[i].retain_grad()
             D_W_P_order[i].retain_grad()
             D_T_P[i].retain_grad()
-            print(f"D_W_P_order[{i}]: {D_W_P_order[i]}")
-            print(f"D_T_P[{i}]: {D_T_P[i]}")
-            print(f"cost_matrix[{i}]: {cost_matrix[i]}")
+            print(f"D_W_P_order_size[{i}]: {D_W_P_order[i].size()}")
+            print(f"D_T_P[_size{i}]: {D_T_P[i].size()}")
+            print(f"cost_matrix_size[{i}]: {cost_matrix[i].size()}")
             pi_star_i = sinkhorn_pytorch(
-                M=cost_matrix[i], a=D_W_P_order[i].unsqueeze(0), b=D_T_P[i].unsqueeze(0)
+                # M=cost_matrix[i], a=D_W_P_order[i].unsqueeze(0), b=D_T_P[i].unsqueeze(0)
+                M=cost_matrix[i], a=D_W_P_order[i], b=D_T_P[i]
             )
             pi_star_i.retain_grad()
             pi_star_i.requires_grad_ = True
