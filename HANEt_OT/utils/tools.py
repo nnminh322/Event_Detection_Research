@@ -273,9 +273,12 @@ def compute_cost_transport(
         last_hidden_state_order_scale = (
             last_hidden_state_order[i].unsqueeze(1).repeat([1, num_classes, 1])
         )
-        cost = 1 - torch.nn.functional.cosine_similarity(
-            last_hidden_state_order_scale, label_embeddings_scale, dim=-1
-        )
+        # cost = 1 - torch.nn.functional.cosine_similarity(
+        #     last_hidden_state_order_scale, label_embeddings_scale, dim=-1
+        # )
+        diff = last_hidden_state_order_scale - label_embeddings_scale
+        cost = torch.norm(diff, p=2, dim=-1) 
+        
         cost_matrix.append(cost)
     return cost_matrix
 
