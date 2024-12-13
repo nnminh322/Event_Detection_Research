@@ -189,7 +189,7 @@ def sinkhorn_pytorch_for_1_sentence(
 
 
 
-def sinkhorn_pytorch(M, a, b, lambda_sh, numItermax=1000, stopThr=5e-3):
+def sinkhorn_pytorch(M, a, b, lambda_sh=20, numItermax=1000, stopThr=5e-3):
     # Khởi tạo u và v, với u là vector phân phối đều ban đầu
     u = torch.ones_like(a) / a.size(0)
     v = torch.ones_like(b) / b.size(0)
